@@ -1,20 +1,7 @@
-import { defineConfig, searchForWorkspaceRoot } from 'vite';
-
-export default defineConfig({
+export default {
+  base: '',
+  root: './',
   build: {
-    minify: false,
     outDir: './docs'
-  },
-  plugins: [
-    {
-    name: "configure-response-headers",
-    configureServer: (server) => {
-      server.middlewares.use((_req, res, next) => {
-        res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-        res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-        next();
-      });
-    },
-  },
-  ]
-});
+  }
+}
