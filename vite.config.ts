@@ -2,7 +2,8 @@ import { defineConfig, searchForWorkspaceRoot } from 'vite';
 
 export default defineConfig({
   build: {
-    minify: false
+    minify: false,
+    outDir: './docs'
   },
   plugins: [
     {
