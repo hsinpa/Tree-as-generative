@@ -102,6 +102,17 @@ export class CanvasHelper {
         this.m_ctx.stroke();
     }
 
+    DrawRect2D(front_left : vec2, front_right : vec2, back_left : vec2, back_right : vec2) {
+        this.m_ctx.beginPath();
+
+        this.m_ctx.moveTo(front_left[0], front_left[1]);
+        this.m_ctx.lineTo(front_right[0], front_right[1]);
+        this.m_ctx.lineTo(back_right[0], back_right[1]);
+        this.m_ctx.lineTo(back_left[0], back_left[1]);
+
+        this.m_ctx.fill();
+    }
+
     DrawImage(texture: HTMLImageElement, position: vec2, options: ImageOption) {
         this.m_ctx.resetTransform();
 

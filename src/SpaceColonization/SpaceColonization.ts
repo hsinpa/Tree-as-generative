@@ -182,11 +182,13 @@ export class SpaceColonization {
         
         for (let i = 0; i < l; i++) {
             let current_branch = this.m_kd_endpoints[ endpointKeys[i] ];
-            current_branch.set_branch_type(current_branch.thickness);
 
-            while (current_branch.parent != null) {
+            while (current_branch != null) {
+                current_branch.set_branch_type(current_branch.thickness);
                 
                 let parent_branch = current_branch.parent;
+
+                if (parent_branch == null) break;
                 
                 if (parent_branch.child_count <= current_branch.child_count) {
                     parent_branch.child_count = current_branch.child_count + 1;

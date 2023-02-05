@@ -20,11 +20,17 @@ export class SC_Branch {
     parent: SC_Branch;
     count: number = 0;
 
+    branch_vertices: vec2[];
+
     candidate_count = 0;
     max_candidate = 15;
 
     child_count = 1; //Relevent to Thickness in visual
-    branch_type : BranchType;
+    branch_type : BranchType = { value: 1, type: BranchEnum.Thick_Branch };
+
+    public get is_vertices_set() {
+        return (this.branch_vertices[0][0] != 0 && this.branch_vertices[0][1] != 0 && this.branch_vertices[1][0] != 0 && this.branch_vertices[1][1] != 0);
+    }
 
     public get thickness() { 
         let thickness = this.child_count * thickness_modifier;
@@ -37,6 +43,7 @@ export class SC_Branch {
         this.position = p_postion;
         this.parent = p_parent;
 
+        this.branch_vertices = Array.of<vec2>(vec2.create(), vec2.create());
         this.direction = vec2.create();
         this.original_direction = vec2.create();
 
@@ -68,17 +75,24 @@ export class SC_Branch {
     }
 
     public set_branch_type(thickness: number) {
-        this.branch_type = { value: 1, type: BranchEnum.Thick_Branch };
+        this.branch_type.type = BranchEnum.Thick_Branch;
         const buffer = 0.5;
-
         this.set_branch_helper(thickness, 15, buffer, BranchEnum.Thin_Branch);
         this.set_branch_helper(thickness, 3, buffer, BranchEnum.Endpoint_Branch);
+
+            //let rot_diff = vec2.dot(this.direction, this.parent.direction);
+
+        let sideDirection = vec2.rotate(vec2.create(), this.direction, vec2.fromValues(0, 0), Math.PI * 0.5);
+        let sideOffset = vec2.scale(vec2.create(), sideDirection,  thickness);
+        this.branch_vertices[0] = vec2.add(this.branch_vertices[0], this.position, sideOffset);
+        this.branch_vertices[1] = vec2.subtract(this.branch_vertices[1], this.position, sideOffset);
     }
 
     private set_branch_helper(thickness: number, threshold: number, buffer: number, enumType : BranchEnum ) {
         if (thickness < threshold) {
             let lower_threshold = threshold - buffer;
             this.branch_type.type = enumType;
+            this.branch_type.value = 1;
 
             if (thickness > lower_threshold) {
                 this.branch_type.value = NormalizeToBase(thickness, lower_threshold, threshold);

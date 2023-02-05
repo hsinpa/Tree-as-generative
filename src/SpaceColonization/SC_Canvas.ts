@@ -71,32 +71,41 @@ export default class SC_Canvas {
 
         for (let i = 0; i < branch_lens; i++) {
             let branch = branches[i];
-
+            if (i == 0)
+                console.log(branch.parent == null);
             if (branch.parent == null) continue;
 
-            //this.m_canvas_helper.DrawLine(branch.parent.position, branch.position, branch.thickness);
+            if (branch.is_vertices_set && branch.parent.is_vertices_set) {
+                this.m_canvas_helper.DrawRect2D(branch.branch_vertices[0], branch.branch_vertices[1], branch.parent.branch_vertices[0], branch.parent.branch_vertices[1]);
+            } else {
+                this.m_canvas_helper.DrawLine(branch.parent.position, branch.position, branch.thickness);
+            }
 
             this.draw_leaf(branch);
         }
     }
 
     private async draw_leaf(source_branch: SC_Branch) {
-        //if (source_branch.branch_type == null || source_branch.parent == null ||source_branch.branch_type.type ==  BranchEnum.Thick_Branch) return;
+        if (source_branch.branch_type.type ==  BranchEnum.Thick_Branch) return;
+        let spawn_leaf_length = this.m_rand_engine.integer(1, 3);
+        let spawn_percent = this.m_rand_engine.realZeroToOneInclusive();
+        
+        let leaf_tex = await this.m_resource.GetImage("./assets/textures/leaf-01.png");
 
-        let spawn_leaf_length = this.m_rand_engine.integer(1, 5);
+        if (source_branch.branch_type.type == BranchEnum.Thin_Branch && spawn_percent > 0.5) return;
+        if (source_branch.branch_type.type == BranchEnum.Endpoint_Branch && spawn_percent > 0.8) return;
 
         for (let i = 0; i < spawn_leaf_length; i++) {
             let spawn_leaf_t = this.m_rand_engine.realZeroToOneExclusive();
             let spawn_position = vec2.lerp(vec2.create(), source_branch.position, source_branch.parent.position, spawn_leaf_t);
-
-            let leaf_tex = await this.m_resource.GetImage("./assets/textures/leaf-01.png");
     
             let options: ImageOption = {base_scale: 0.5, target_scale: 1, dx : 0, dy: 0}
     
             options.translation = spawn_position;
-    
-            let random_direction_x = source_branch.direction[0] + (this.m_rand_engine.real(-1, 1) * Math.PI * 0.2);
-            let random_direction_y = source_branch.direction[1] + (this.m_rand_engine.real(-1, 1) * Math.PI * 0.2);
+            
+            let rotation_range = 0.25;
+            let random_direction_x = source_branch.direction[0] + (this.m_rand_engine.real(-1, 1) * Math.PI * rotation_range);
+            let random_direction_y = source_branch.direction[1] + (this.m_rand_engine.real(-1, 1) * Math.PI * rotation_range);
     
             let random_direction_nor = vec2.fromValues(random_direction_x, random_direction_y);
                                         vec2.normalize(random_direction_nor, random_direction_nor);
