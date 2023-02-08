@@ -19,6 +19,15 @@ class WebglResource {
 
         return texture;         
     }
+
+    
+    ForceGetImage(path : string) : HTMLImageElement | null {
+        if (this.textureCache.containsKey(path)) {
+            return this.textureCache.getValue(path);
+        }
+
+        return null;         
+    }
 }
 
 export default WebglResource;

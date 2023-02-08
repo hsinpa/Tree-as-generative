@@ -1,10 +1,12 @@
 import {vec2 } from 'gl-matrix';
 import { v4 as uuidv4 } from 'uuid';
 import {Clamp, NormalizeToBase} from '../Hsinpa/UtilityFunc'
+import SC_Leaf from './SC_Leaf';
 
 const thickness_modifier = 0.6;
 
 export enum BranchEnum { Endpoint_Branch,  Thin_Branch, Thick_Branch }
+export enum KinematicFlag { None, InverseKinematic, ForwardKinematic }
 
 export interface BranchType {
     type : BranchEnum;
@@ -17,16 +19,19 @@ export class SC_Branch {
     direction: vec2;
     original_direction: vec2;
 
+    children : SC_Branch[] = [];
     parent: SC_Branch;
     count: number = 0;
 
     branch_vertices: vec2[];
+    branch_leaf: SC_Leaf[];
 
     candidate_count = 0;
     max_candidate = 15;
 
     child_count = 1; //Relevent to Thickness in visual
     branch_type : BranchType = { value: 1, type: BranchEnum.Thick_Branch };
+    kinematic_flag : KinematicFlag = KinematicFlag.None;
 
     public get is_vertices_set() {
         return (this.branch_vertices[0][0] != 0 && this.branch_vertices[0][1] != 0 && this.branch_vertices[1][0] != 0 && this.branch_vertices[1][1] != 0);
@@ -46,6 +51,7 @@ export class SC_Branch {
         this.branch_vertices = Array.of<vec2>(vec2.create(), vec2.create());
         this.direction = vec2.create();
         this.original_direction = vec2.create();
+        this.branch_leaf = [];
 
         if (this.parent != null) {
             vec2.subtract(this.direction, this.position, this.parent.position);
@@ -71,7 +77,11 @@ export class SC_Branch {
     public next() {
         let next_vector = vec2.scale(vec2.create(), this.direction, 20);
         let next_position = vec2.add(vec2.create(), this.position, next_vector);
-        return new SC_Branch(next_position, this);
+        let child = new SC_Branch(next_position, this);
+
+        this.children.push(child);
+
+        return child;
     }
 
     public set_branch_type(thickness: number) {

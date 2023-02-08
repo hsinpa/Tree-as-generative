@@ -3,6 +3,8 @@ import {vec2 } from 'gl-matrix';
 import { SC_Branch } from './SC_Branch';
 import { Rect } from './SC_Types';
 import KDBush from "kdbush";
+import {PhysicsWorkerProtocol} from '../Physics/PhysicsWorkerProtocol';
+
 
 export interface SC_Node {
     position : vec2,
@@ -13,6 +15,7 @@ interface KD_EndPoints { [key: string]: SC_Branch; }
 
 export class SpaceColonization {
 
+    private m_workers : PhysicsWorkerProtocol;
     private m_rand_engine : Random;
     private m_leaves : SC_Node[] = [];
     private m_branches : SC_Branch[] = [];
@@ -35,6 +38,8 @@ export class SpaceColonization {
         this.m_min_distance = min_distance;
         this.m_max_distance = max_distance;
         this.m_rand_engine = random_engine;
+
+        this.m_workers = new  PhysicsWorkerProtocol();
     } 
 
     public spawn_attractor(rect: Rect, spawn_length) {

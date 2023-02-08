@@ -6,6 +6,13 @@ import { SC_Branch, BranchEnum } from './SC_Branch';
 import WebglResource from '../Hsinpa/WebglResource';
 import { vec2 } from 'gl-matrix';
 import {MersenneTwister19937, Random } from 'random-js';
+import { Clamp } from '../Hsinpa/UtilityFunc';
+import { Config, ImagesPath } from './SC_Static';
+import SC_Leaf from './SC_Leaf';
+
+export enum ConstructionType {
+    Branch, Leaf, Complete
+}
 
 export default class SC_Canvas {
 
@@ -15,15 +22,15 @@ export default class SC_Canvas {
     private m_resource: WebglResource;
     private m_rand_engine : Random;
 
-    constructor(canvas_dom_query: string) {
-        let seed = undefined;
-        if (seed == undefined) {
-            this.m_rand_engine = new Random(MersenneTwister19937.autoSeed());
-        } else
-            this.m_rand_engine = new Random(MersenneTwister19937.seed(seed));
+    private m_construction_flag : ConstructionType = ConstructionType.Branch;
+    public get construct_flag() {return this.m_construction_flag; }
+    private m_last_process_index : number = 0;
 
-        this.m_resource = new WebglResource();
-        this.m_simple_canvas = new SimpleCanvas(canvas_dom_query);
+    constructor(simple_canvas: SimpleCanvas, random_engine: Random, webResource: WebglResource) {
+        this.m_rand_engine = random_engine;
+
+        this.m_resource = webResource;
+        this.m_simple_canvas = simple_canvas;
         this.m_canvas_helper = new CanvasHelper(this.m_simple_canvas.Context);
         this.m_space_colonization = new SpaceColonization(20, 100, this.m_rand_engine);
 
@@ -32,27 +39,47 @@ export default class SC_Canvas {
 
         this.m_space_colonization.spawn_attractor(attractor_spawn_rect, 200);
         this.m_space_colonization.spawn_free_branch(this.m_simple_canvas.ScreenWidth * 0.5, this.m_simple_canvas.ScreenHeight);
+    }
 
+    public construct_on_the_fly() {
+        this.m_canvas_helper.Clear(this.m_simple_canvas.ScreenWidth, this.m_simple_canvas.ScreenHeight);
 
-        window.requestAnimationFrame(this.render.bind(this));
+        switch(this.m_construction_flag) {
+            case ConstructionType.Branch: {
+                
+                this.draw_candidates(this.m_space_colonization.Leaves);
+                this.draw_branch(this.m_space_colonization.Branches);
+            
+                let update_branch_num = this.m_space_colonization.grow_branch();
+                this.m_space_colonization.calculate_branch_width();    
+
+                if (update_branch_num == 0) {
+                    this.m_space_colonization.Branches.forEach(x => {
+                        this.calculate_leaf(x);
+                    });
+
+                    this.m_construction_flag = ConstructionType.Leaf;
+                };        
+            }
+
+            case ConstructionType.Leaf: {
+                let stepProcessLens = 20;
+                let maxBranchLens =  this.m_space_colonization.Branches.length;
+                // let target_end_index = Clamp(this.m_last_process_index + stepProcessLens, maxBranchLens, 0);
+
+                // let targets = this.m_space_colonization.Branches.slice(this.m_last_process_index, target_end_index);
+                this.draw_branch(this.m_space_colonization.Branches);
+                for (let i = 0; i < maxBranchLens; i++) {
+                    this.draw_leaf(this.m_space_colonization.Branches[i]);
+                }
+            }
+        } 
     }
 
     public render() {
         this.m_canvas_helper.Clear(this.m_simple_canvas.ScreenWidth, this.m_simple_canvas.ScreenHeight);
-
-        this.draw_candidates(this.m_space_colonization.Leaves);
+        
         this.draw_branch(this.m_space_colonization.Branches);
-    
-        let update_branch_num = this.m_space_colonization.grow_branch();
-
-        //console.log("Update Branch Num " + update_branch_num);
-
-        if (update_branch_num == 0) {
-            this.on_branch_spawn_completed();
-            return;
-        };
-
-        window.requestAnimationFrame(this.render.bind(this));
     }
 
     private draw_candidates(leaves: SC_Node[]) {
@@ -71,8 +98,6 @@ export default class SC_Canvas {
 
         for (let i = 0; i < branch_lens; i++) {
             let branch = branches[i];
-            if (i == 0)
-                console.log(branch.parent == null);
             if (branch.parent == null) continue;
 
             if (branch.is_vertices_set && branch.parent.is_vertices_set) {
@@ -80,49 +105,61 @@ export default class SC_Canvas {
             } else {
                 this.m_canvas_helper.DrawLine(branch.parent.position, branch.position, branch.thickness);
             }
-
-            this.draw_leaf(branch);
         }
     }
 
-    private async draw_leaf(source_branch: SC_Branch) {
+    private async calculate_leaf(source_branch: SC_Branch) {
+        if (source_branch.branch_leaf.length > 0) return;
         if (source_branch.branch_type.type ==  BranchEnum.Thick_Branch) return;
-        let spawn_leaf_length = this.m_rand_engine.integer(1, 3);
+        
         let spawn_percent = this.m_rand_engine.realZeroToOneInclusive();
         
-        let leaf_tex = await this.m_resource.GetImage("./assets/textures/leaf-01.png");
+        if (source_branch.branch_type.type == BranchEnum.Thin_Branch && spawn_percent > Config.Leaf_ThinBranch_Rate) return;
+        if (source_branch.branch_type.type == BranchEnum.Endpoint_Branch && spawn_percent > Config.Leaf_Endpoint_Rate) return;
 
-        if (source_branch.branch_type.type == BranchEnum.Thin_Branch && spawn_percent > 0.5) return;
-        if (source_branch.branch_type.type == BranchEnum.Endpoint_Branch && spawn_percent > 0.8) return;
+        let spawn_leaf_length = this.m_rand_engine.integer(1, 3);
 
         for (let i = 0; i < spawn_leaf_length; i++) {
             let spawn_leaf_t = this.m_rand_engine.realZeroToOneExclusive();
             let spawn_position = vec2.lerp(vec2.create(), source_branch.position, source_branch.parent.position, spawn_leaf_t);
-    
-            let options: ImageOption = {base_scale: 0.5, target_scale: 1, dx : 0, dy: 0}
-    
-            options.translation = spawn_position;
+            spawn_position = vec2.subtract(spawn_position, spawn_position, source_branch.position);
             
             let rotation_range = 0.25;
-            let random_direction_x = source_branch.direction[0] + (this.m_rand_engine.real(-1, 1) * Math.PI * rotation_range);
-            let random_direction_y = source_branch.direction[1] + (this.m_rand_engine.real(-1, 1) * Math.PI * rotation_range);
+            let random_direction_x = (this.m_rand_engine.real(-1, 1) * Math.PI * rotation_range);
+            let random_direction_y = (this.m_rand_engine.real(-1, 1) * Math.PI * rotation_range);
     
             let random_direction_nor = vec2.fromValues(random_direction_x, random_direction_y);
                                         vec2.normalize(random_direction_nor, random_direction_nor);
     
-            options.rotation = Math.atan2(random_direction_nor[1], random_direction_nor[0]);
-            options.dy = -leaf_tex.height * 0.5 * options.base_scale * options.target_scale;
-    
-            this.m_canvas_helper.DrawImage(leaf_tex, spawn_position, options);
+            let rotation = Math.atan2(random_direction_nor[1], random_direction_nor[0]);
+            let scale = 0.5;
+
+            let new_leaf = new SC_Leaf(source_branch, spawn_leaf_t, rotation, 0.5);
+            source_branch.branch_leaf.push(new_leaf);
         }
+
     }
 
-    private async on_branch_spawn_completed() {
-        this.m_space_colonization.calculate_branch_width();
+    private async draw_leaf(source_branch: SC_Branch) {
+        let spawn_leaf_length = source_branch.branch_leaf.length;
+        let leaf_tex = await this.m_resource.ForceGetImage(ImagesPath.leave_01);
 
-        this.m_canvas_helper.Clear(this.m_simple_canvas.ScreenWidth, this.m_simple_canvas.ScreenHeight);
-        
-        this.draw_branch(this.m_space_colonization.Branches);
+        for (let i = 0; i < spawn_leaf_length; i++) {
+            let leaf = source_branch.branch_leaf[i];
+            let spawn_position = vec2.lerp(vec2.create(), source_branch.position, source_branch.parent.position, leaf.lerp_t);
+
+            let options: ImageOption = {base_scale: leaf.scale, target_scale: 1, dx : 0, dy: 0}
+    
+            options.translation = spawn_position;
+            
+            let random_direction_nor = vec2.fromValues(source_branch.direction[0], source_branch.direction[1]);
+                                        vec2.normalize(random_direction_nor, random_direction_nor);
+    
+            options.rotation = Math.atan2(random_direction_nor[1], random_direction_nor[0]) + leaf.relative_angle;
+            options.dy = -leaf_tex.height * 0.5 * options.base_scale * options.target_scale;
+    
+            this.m_canvas_helper.DrawImage(leaf_tex, spawn_position , options);
+        }
     }
 
 }
