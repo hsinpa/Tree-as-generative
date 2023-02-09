@@ -9,6 +9,7 @@ import {MersenneTwister19937, Random } from 'random-js';
 import { Clamp } from '../Hsinpa/UtilityFunc';
 import { Config, ImagesPath } from './SC_Static';
 import SC_Leaf from './SC_Leaf';
+import KDBush from "kdbush";
 
 export enum ConstructionType {
     Branch, Leaf, Complete
@@ -63,24 +64,54 @@ export default class SC_Canvas {
             }
 
             case ConstructionType.Leaf: {
-                let stepProcessLens = 20;
+                let stepProcessLens = 3;
                 let maxBranchLens =  this.m_space_colonization.Branches.length;
-                // let target_end_index = Clamp(this.m_last_process_index + stepProcessLens, maxBranchLens, 0);
+                let target_end_index = Clamp(this.m_last_process_index + stepProcessLens, maxBranchLens, 0);
 
                 // let targets = this.m_space_colonization.Branches.slice(this.m_last_process_index, target_end_index);
                 this.draw_branch(this.m_space_colonization.Branches);
-                for (let i = 0; i < maxBranchLens; i++) {
-                    this.draw_leaf(this.m_space_colonization.Branches[i]);
+                for (let i = 0; i < target_end_index; i++) {
+                    this.draw_leaf(this.m_space_colonization.Branches[i], this.m_last_process_index / maxBranchLens);
                 }
+                
+                this.m_last_process_index = target_end_index;
+
+                if (this.m_last_process_index == maxBranchLens)
+                    this.m_construction_flag = ConstructionType.Complete;
             }
         } 
     }
 
     public render() {
         this.m_canvas_helper.Clear(this.m_simple_canvas.ScreenWidth, this.m_simple_canvas.ScreenHeight);
-        
+        let maxBranchLens =  this.m_space_colonization.Branches.length;
+        let endPointLens =  this.m_space_colonization.EndPoints.length;
+
         this.draw_branch(this.m_space_colonization.Branches);
+
+        for (let i = 0; i < maxBranchLens; i++) {
+            let branch = this.m_space_colonization.Branches[i];
+            this.draw_leaf(branch, 1);
+
+            if (branch.child_count == 1)
+                this.m_canvas_helper.DrawSphere(branch.position[0], branch.position[1], 10, 0.5);
+        }
     }
+
+    public async draw_control_point(mouse_position: vec2) {
+        // let kd_branch : KDBush<SC_Branch> = this.m_space_colonization.BranchKD;
+        // let branches = this.m_space_colonization.Branches;
+        // let filter_branches = kd_branch.within(mouse_position[0], mouse_position[1], 5);
+        // let filter_lens = filter_branches.length;
+
+        // for (let i = 0; i < filter_lens; i++) {
+        //     let process_branch = branches[ filter_branches[i] ];
+
+        //     if (process_branch.count == 0)
+        //         console.log("Find");
+        // }
+    }
+
 
     private draw_candidates(leaves: SC_Node[]) {
         // let leaves = this.m_space_colonization.Leaves;
@@ -140,15 +171,15 @@ export default class SC_Canvas {
 
     }
 
-    private async draw_leaf(source_branch: SC_Branch) {
+    private draw_leaf(source_branch: SC_Branch, target_scale: number) {
         let spawn_leaf_length = source_branch.branch_leaf.length;
-        let leaf_tex = await this.m_resource.ForceGetImage(ImagesPath.leave_01);
+        let leaf_tex = this.m_resource.ForceGetImage(ImagesPath.leave_01);
 
         for (let i = 0; i < spawn_leaf_length; i++) {
             let leaf = source_branch.branch_leaf[i];
             let spawn_position = vec2.lerp(vec2.create(), source_branch.position, source_branch.parent.position, leaf.lerp_t);
 
-            let options: ImageOption = {base_scale: leaf.scale, target_scale: 1, dx : 0, dy: 0}
+            let options: ImageOption = {base_scale: leaf.scale, target_scale: target_scale, dx : 0, dy: 0}
     
             options.translation = spawn_position;
             

@@ -75,14 +75,20 @@ export class CanvasHelper {
         this.m_ctx.resetTransform();			
     }
 
-    DrawSphere(x : number, y : number, radius: number)
+    DrawSphere(x : number, y : number, radius: number, alpha? : number)
 	{
+        // if (alpha != undefined)
+        //     this.m_ctx.globalAlpha = alpha;
+
 		this.m_ctx.beginPath();			
 		this.m_ctx.arc(
 			x, y, radius, 0.0, 2.0 * Math.PI
         ); 
+        this.m_ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
         this.m_ctx.closePath();
         this.m_ctx.fill();
+
+        this.m_ctx.globalAlpha = 1; //Reset
 	}
 
     DrawLine(point_a : vec2, point_b : vec2, thickness: number) {
@@ -104,6 +110,7 @@ export class CanvasHelper {
 
     DrawRect2D(front_left : vec2, front_right : vec2, back_left : vec2, back_right : vec2) {
         this.m_ctx.beginPath();
+        this.m_ctx.fillStyle = "black";
 
         this.m_ctx.moveTo(front_left[0], front_left[1]);
         this.m_ctx.lineTo(front_right[0], front_right[1]);

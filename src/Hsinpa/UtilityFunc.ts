@@ -21,3 +21,7 @@ export function GetImagePromise(imagePath : string) {
         return im;
     });
 }
+
+export function Lerp(a: number, b : number, t : number) {
+    return (a * (1 - t)) + (b * t);
+}

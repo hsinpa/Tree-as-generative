@@ -12,6 +12,8 @@ class SimpleCanvas {
 
     public get Context() { return this._context; }
 
+    public get Dom() { return this._canvasDom; }
+
     constructor(queryString :string) {
         this._canvasDom = document.querySelector(queryString);
         this.IsProgramValid = this._canvasDom != null;

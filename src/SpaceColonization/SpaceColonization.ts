@@ -22,6 +22,7 @@ export class SpaceColonization {
     private m_kd_candidates : KDBush<SC_Node> = null;
     private m_kd_branches : KDBush<SC_Branch> = null;
     private m_kd_endpoints : KD_EndPoints = {};
+    private m_endpoints: SC_Branch[] = [];
 
     private m_min_distance : number;
     private m_max_distance : number;
@@ -32,6 +33,14 @@ export class SpaceColonization {
 
     public get Branches() {
         return this.m_branches;
+    }
+
+    public get BranchKD() {
+        return this.m_kd_branches;
+    }
+
+    public get EndPoints() {
+        return this.m_endpoints;
     }
 
     constructor(min_distance : number, max_distance : number, random_engine : Random) {
@@ -200,7 +209,7 @@ export class SpaceColonization {
                 } else {
                   break;  
                 }
-
+                
                 current_branch = parent_branch;
             }
         }

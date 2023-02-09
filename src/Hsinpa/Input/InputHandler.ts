@@ -19,6 +19,8 @@ export interface InputMouseCallback {
 export interface InputMouseClickCallback {
     (): void;
 }
+
+export enum MouseEvent {Hover, Down, Up}
   
 export class InputHandler {
 
@@ -43,7 +45,7 @@ export class InputHandler {
         });  
     }
 
-    public RegisterMouseMovement(canvasDom : HTMLBodyElement, callback : InputMouseCallback) {
+    public RegisterMouseMovement(canvasDom : HTMLElement, callback : InputMouseCallback) {
         canvasDom.requestPointerLock();
 
         let deltaArray = [0, 0];
