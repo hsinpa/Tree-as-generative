@@ -1,4 +1,5 @@
 import { vec2 } from "gl-matrix";
+import Color from "../Hsinpa/Color";
 
 //start from center
 export class RoundRectStruct {
@@ -68,14 +69,15 @@ export class CanvasHelper {
         this.m_ctx.rotate( -(roundRect.angle));
         this.m_ctx.fillStyle = "green";
         this.m_ctx.fillRect(0, -roundRect.radius, roundRect.length, roundRect.radius * 2);
+        let color = new Color();
 
-        this.DrawSphere(0, 0, roundRect.radius);
-        this.DrawSphere(roundRect.length, 0, roundRect.radius);
+        this.DrawSphere(color, 0, 0, roundRect.radius);
+        this.DrawSphere(color, roundRect.length, 0, roundRect.radius);
 
         this.m_ctx.resetTransform();			
     }
 
-    DrawSphere(x : number, y : number, radius: number, alpha? : number)
+    DrawSphere(color: Color, x : number, y : number, radius: number, alpha? : number)
 	{
         // if (alpha != undefined)
         //     this.m_ctx.globalAlpha = alpha;
@@ -84,7 +86,7 @@ export class CanvasHelper {
 		this.m_ctx.arc(
 			x, y, radius, 0.0, 2.0 * Math.PI
         ); 
-        this.m_ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+        this.m_ctx.fillStyle = color.style;
         this.m_ctx.closePath();
         this.m_ctx.fill();
 

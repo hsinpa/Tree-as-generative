@@ -1,5 +1,7 @@
 import { vec2 } from "gl-matrix";
 
+export enum Mode {Idle, Interaction}
+
 export class Rect {
     private x : number;
     private y: number;

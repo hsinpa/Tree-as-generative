@@ -10,6 +10,7 @@ import { Clamp } from '../Hsinpa/UtilityFunc';
 import { Config, ImagesPath } from './SC_Static';
 import SC_Leaf from './SC_Leaf';
 import KDBush from "kdbush";
+import Color from '../Hsinpa/Color';
 
 export enum ConstructionType {
     Branch, Leaf, Complete
@@ -27,13 +28,15 @@ export default class SC_Canvas {
     public get construct_flag() {return this.m_construction_flag; }
     private m_last_process_index : number = 0;
 
-    constructor(simple_canvas: SimpleCanvas, random_engine: Random, webResource: WebglResource) {
+
+
+    constructor(simple_canvas: SimpleCanvas, space_colonization : SpaceColonization, random_engine: Random, webResource: WebglResource) {
         this.m_rand_engine = random_engine;
 
         this.m_resource = webResource;
         this.m_simple_canvas = simple_canvas;
         this.m_canvas_helper = new CanvasHelper(this.m_simple_canvas.Context);
-        this.m_space_colonization = new SpaceColonization(20, 100, this.m_rand_engine);
+        this.m_space_colonization = space_colonization;
 
         let attractor_y = this.m_simple_canvas.ScreenHeight * 0.5;
         let attractor_spawn_rect = new Rect(this.m_simple_canvas.ScreenWidth * 0.2, 0, this.m_simple_canvas.ScreenWidth * 0.6, attractor_y);
@@ -76,13 +79,15 @@ export default class SC_Canvas {
                 
                 this.m_last_process_index = target_end_index;
 
-                if (this.m_last_process_index == maxBranchLens)
+                if (this.m_last_process_index == maxBranchLens) {
+                    this.on_prepare_stage_completed();
                     this.m_construction_flag = ConstructionType.Complete;
+                }
             }
         } 
     }
 
-    public render() {
+    public render(ctrl_point_post_callback: (SC_Branch) => void = null ) {
         this.m_canvas_helper.Clear(this.m_simple_canvas.ScreenWidth, this.m_simple_canvas.ScreenHeight);
         let maxBranchLens =  this.m_space_colonization.Branches.length;
         let endPointLens =  this.m_space_colonization.EndPoints.length;
@@ -93,33 +98,36 @@ export default class SC_Canvas {
             let branch = this.m_space_colonization.Branches[i];
             this.draw_leaf(branch, 1);
 
-            if (branch.child_count == 1)
-                this.m_canvas_helper.DrawSphere(branch.position[0], branch.position[1], 10, 0.5);
+            if (branch.is_valid_endpoint) {
+                if (ctrl_point_post_callback != null) ctrl_point_post_callback(branch);
+
+                this.m_canvas_helper.DrawSphere(branch.style, branch.position[0], branch.position[1], 10, 0.5);
+            }
         }
     }
 
-    public async draw_control_point(mouse_position: vec2) {
-        // let kd_branch : KDBush<SC_Branch> = this.m_space_colonization.BranchKD;
-        // let branches = this.m_space_colonization.Branches;
-        // let filter_branches = kd_branch.within(mouse_position[0], mouse_position[1], 5);
-        // let filter_lens = filter_branches.length;
+    // public async draw_control_point(mouse_position: vec2) {
+    //     let kd_branch : KDBush<SC_Branch> = this.m_space_colonization.BranchKD;
+    //     let branches = this.m_space_colonization.Branches;
+    //     let filter_branches = kd_branch.within(mouse_position[0], mouse_position[1], 5);
+    //     let filter_lens = filter_branches.length;
 
-        // for (let i = 0; i < filter_lens; i++) {
-        //     let process_branch = branches[ filter_branches[i] ];
+    //     for (let i = 0; i < filter_lens; i++) {
+    //         let process_branch = branches[ filter_branches[i] ];
 
-        //     if (process_branch.count == 0)
-        //         console.log("Find");
-        // }
-    }
+    //         if (process_branch.count == 0)
+    //             console.log("Find");
+    //     }
+    // }
 
 
     private draw_candidates(leaves: SC_Node[]) {
         // let leaves = this.m_space_colonization.Leaves;
         let leaves_lens = leaves.length;
-
+        let candidate_color = new Color(120, 80, 255, 1);
         for (let l = 0; l < leaves_lens; l++) {
             let leave = leaves[l];
-            this.m_canvas_helper.DrawSphere(leave.position[0], leave.position[1], 3);
+            this.m_canvas_helper.DrawSphere(candidate_color, leave.position[0], leave.position[1], 3);
         }
     }
 
@@ -193,4 +201,39 @@ export default class SC_Canvas {
         }
     }
 
+    private on_prepare_stage_completed() {
+        let maxBranchLens =  this.m_space_colonization.Branches.length;
+
+        for (let i = 0; i < maxBranchLens; i++) {
+            let branch = this.m_space_colonization.Branches[i];
+
+
+            if (branch.child_count == 1) {
+
+                let length = 0;
+                let length_checked = false;
+                let check_branch = branch;
+
+                while (!length_checked) {
+                    length++;
+                    if (check_branch.parent == null) {
+                        length_checked = true;
+                        continue;
+                    }
+
+
+
+                    if (check_branch.parent.child_count - check_branch.child_count > 1) {
+                        length_checked = true;
+                        continue;
+                    }
+                    check_branch = check_branch.parent;
+                }
+
+
+                if(length >= 10)
+                    branch.is_valid_endpoint = true;
+            }
+        }
+    }
 }

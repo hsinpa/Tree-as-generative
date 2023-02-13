@@ -1,14 +1,18 @@
 import { vec2 } from "gl-matrix";
 import { MersenneTwister19937, Random } from "random-js";
+import Color from "../Hsinpa/Color";
 import { InputHandler, MouseEvent } from "../Hsinpa/Input/InputHandler";
 import SimpleCanvas from "../Hsinpa/SimpleCanvas";
 import WebglResource from "../Hsinpa/WebglResource";
+import { SC_Branch } from "./SC_Branch";
 import SC_Canvas, {ConstructionType} from "./SC_Canvas";
-import {ImagesPath} from './SC_Static';
+import {ImagesPath, Config} from './SC_Static';
+import { Mode } from "./SC_Types";
+import { SpaceColonization } from "./SpaceColonization";
 
 //Main entry point
 export default class SC_Director {
-
+    private m_space_colonization : SpaceColonization;
     private m_sc_canvas : SC_Canvas;
     private m_simple_canvas: SimpleCanvas;
     private m_rand_engine : Random;
@@ -16,15 +20,20 @@ export default class SC_Director {
     private m_inputHandler : InputHandler;
 
     private m_mouse_position: vec2;
+    private m_mode: Mode = Mode.Idle;
+    public get mode() { return this.m_mode; }
+
+    private m_interact_branch: SC_Branch = null;
 
     constructor(canvas_dom_query: string, seed?: number) {
         this.m_rand_engine = this.get_random_engine(seed);
+        this.m_space_colonization = new SpaceColonization(20, 100, this.m_rand_engine);
 
         this.m_mouse_position = vec2.create();
         this.m_inputHandler = new InputHandler();
         this.m_resource = new WebglResource();
         this.m_simple_canvas = new SimpleCanvas(canvas_dom_query);
-        this.m_sc_canvas = new SC_Canvas(this.m_simple_canvas, this.m_rand_engine, this.m_resource);
+        this.m_sc_canvas = new SC_Canvas(this.m_simple_canvas, this.m_space_colonization, this.m_rand_engine, this.m_resource);
 
         this.m_simple_canvas.Dom.addEventListener('mousemove', e => { this.on_mouse_event(e.clientX, e.clientY, MouseEvent.Hover); } );
         this.m_simple_canvas.Dom.addEventListener('mousedown', e => { this.on_mouse_event(e.clientX, e.clientY, MouseEvent.Down); } );
@@ -45,7 +54,7 @@ export default class SC_Director {
         if (this.m_sc_canvas.construct_flag != ConstructionType.Complete) {
             this.m_sc_canvas.construct_on_the_fly();            
         } else {
-            this.m_sc_canvas.render();
+            this.m_sc_canvas.render(this.on_ctrl_point_draw.bind(this));
         }
 
         window.requestAnimationFrame(this.update.bind(this));
@@ -62,8 +71,48 @@ export default class SC_Director {
         this.m_mouse_position[0] = mouse_x;
         this.m_mouse_position[1] = mouse_y;
 
-        this.m_sc_canvas.draw_control_point(this.m_mouse_position);
+        if (mouse_event == MouseEvent.Up) this.on_mouse_up();
+        if (mouse_event == MouseEvent.Down) this.on_mouse_down();
     }
 
+    private on_mouse_up() {
+        this.m_mode = Mode.Idle;
+        this.m_interact_branch = null;
+    }
 
+    private on_mouse_down() {
+        let kd_branch : KDBush<SC_Branch> = this.m_space_colonization.BranchKD;
+        let branches = this.m_space_colonization.Branches;
+        let filter_branches = kd_branch.within(this.m_mouse_position[0], this.m_mouse_position[1], 10);
+        let filter_lens = filter_branches.length;
+
+        for (let i = 0; i < filter_lens; i++) {
+            let process_branch = branches[ filter_branches[i] ];
+
+            if (process_branch.count == 0) {
+                this.m_mode = Mode.Interaction;
+                this.m_interact_branch = process_branch;
+            }
+        }
+    }
+
+    private on_ctrl_point_draw(branch: SC_Branch) {
+        if (branch == this.m_interact_branch) {
+            branch.style.copy_value(Config.Leaf_Interact_Color);
+
+            return;
+        }
+        
+        let distance = vec2.distance(branch.position, this.m_mouse_position);
+        
+        let interact_avail_dist = 30;
+        if (distance < interact_avail_dist && this.mode == Mode.Idle) {
+            console.log("Hello friend");
+
+            let new_color = Color.lerp(branch.original_style, Config.Leaf_Interact_Color, 1 - (distance / interact_avail_dist) );
+            branch.style = new_color;
+        } else {
+            branch.style.copy_value(branch.original_style);
+        }       
+    }
 }

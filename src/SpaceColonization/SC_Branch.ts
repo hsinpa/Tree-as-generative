@@ -2,6 +2,7 @@ import {vec2 } from 'gl-matrix';
 import { v4 as uuidv4 } from 'uuid';
 import {Clamp, NormalizeToBase} from '../Hsinpa/UtilityFunc'
 import SC_Leaf from './SC_Leaf';
+import Color from '../Hsinpa/Color';
 
 const thickness_modifier = 0.6;
 
@@ -31,7 +32,13 @@ export class SC_Branch {
 
     child_count = 1; //Relevent to Thickness in visual
     branch_type : BranchType = { value: 1, type: BranchEnum.Thick_Branch };
+
+    style: Color;
+    original_style: Color;
+
     kinematic_flag : KinematicFlag = KinematicFlag.None;
+
+    public is_valid_endpoint : boolean = false;
 
     public get is_vertices_set() {
         return (this.branch_vertices[0][0] != 0 && this.branch_vertices[0][1] != 0 && this.branch_vertices[1][0] != 0 && this.branch_vertices[1][1] != 0);
@@ -47,6 +54,9 @@ export class SC_Branch {
         this.id = uuidv4();
         this.position = p_postion;
         this.parent = p_parent;
+        
+        this.original_style = new Color(220, 50, 50, 0.5);
+        this.style = Object.assign(new Color(), this.original_style);
 
         this.branch_vertices = Array.of<vec2>(vec2.create(), vec2.create());
         this.direction = vec2.create();
@@ -110,4 +120,7 @@ export class SC_Branch {
             return;
         }
     }
+
+
+
 }

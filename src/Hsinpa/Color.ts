@@ -54,6 +54,15 @@ export default class Color {
         this.recreate_style();
     }
 
+    public copy_value(source_color: Color) {
+        this._r = source_color.r;
+        this._g = source_color.g;
+        this._b = source_color.b;
+        this._a = source_color.a;
+
+        this.recreate_style();
+    }
+
     private recreate_style() {
         this._style = `rgba(${this._r}, ${this._g}, ${this._b}, ${this._a})`;
     }
