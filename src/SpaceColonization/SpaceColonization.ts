@@ -214,4 +214,9 @@ export class SpaceColonization {
             }
         }
     }
+
+    public rebuild_kd_tree() {
+        this.m_kd_branches = new KDBush(this.m_branches, (n) => n.position[0],(n) => n.position[1], this.m_leaves.length, Float32Array);
+    }
+
 }

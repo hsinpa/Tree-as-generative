@@ -11,6 +11,7 @@ import { Config, ImagesPath } from './SC_Static';
 import SC_Leaf from './SC_Leaf';
 import KDBush from "kdbush";
 import Color from '../Hsinpa/Color';
+import {LoopOps} from '../Hsinpa/UtilityFunc';
 
 export enum ConstructionType {
     Branch, Leaf, Complete
@@ -52,7 +53,8 @@ export default class SC_Canvas {
             case ConstructionType.Branch: {
                 
                 this.draw_candidates(this.m_space_colonization.Leaves);
-                this.draw_branch(this.m_space_colonization.Branches);
+
+                LoopOps(this.m_space_colonization.Branches, (x) => {this.draw_branch(x)});
             
                 let update_branch_num = this.m_space_colonization.grow_branch();
                 this.m_space_colonization.calculate_branch_width();    
@@ -72,7 +74,8 @@ export default class SC_Canvas {
                 let target_end_index = Clamp(this.m_last_process_index + stepProcessLens, maxBranchLens, 0);
 
                 // let targets = this.m_space_colonization.Branches.slice(this.m_last_process_index, target_end_index);
-                this.draw_branch(this.m_space_colonization.Branches);
+                LoopOps(this.m_space_colonization.Branches, (x) => {this.draw_branch(x)});
+
                 for (let i = 0; i < target_end_index; i++) {
                     this.draw_leaf(this.m_space_colonization.Branches[i], this.m_last_process_index / maxBranchLens);
                 }
@@ -89,13 +92,18 @@ export default class SC_Canvas {
 
     public render(ctrl_point_post_callback: (SC_Branch) => void = null ) {
         this.m_canvas_helper.Clear(this.m_simple_canvas.ScreenWidth, this.m_simple_canvas.ScreenHeight);
-        let maxBranchLens =  this.m_space_colonization.Branches.length;
-        let endPointLens =  this.m_space_colonization.EndPoints.length;
 
-        this.draw_branch(this.m_space_colonization.Branches);
+        LoopOps(this.m_space_colonization.Branches, (branch) => {
 
-        for (let i = 0; i < maxBranchLens; i++) {
-            let branch = this.m_space_colonization.Branches[i];
+            //Reset direction
+            if (branch.parent != null) {
+                vec2.subtract(branch.direction, branch.position, branch.parent.position);
+                vec2.normalize(branch.direction, branch.direction);
+            }
+            
+
+            branch.rebuild_vertices(branch.thickness);
+            this.draw_branch(branch);
             this.draw_leaf(branch, 1);
 
             if (branch.is_valid_endpoint) {
@@ -103,7 +111,7 @@ export default class SC_Canvas {
 
                 this.m_canvas_helper.DrawSphere(branch.style, branch.position[0], branch.position[1], 10, 0.5);
             }
-        }
+        });
     }
 
     // public async draw_control_point(mouse_position: vec2) {
@@ -131,19 +139,13 @@ export default class SC_Canvas {
         }
     }
 
-    private draw_branch(branches: SC_Branch[]) {
-        // let branches = this.m_space_colonization.Branches;
-        let branch_lens = branches.length;
+    private draw_branch(branch: SC_Branch) {
+        if (branch.parent == null) return;
 
-        for (let i = 0; i < branch_lens; i++) {
-            let branch = branches[i];
-            if (branch.parent == null) continue;
-
-            if (branch.is_vertices_set && branch.parent.is_vertices_set) {
-                this.m_canvas_helper.DrawRect2D(branch.branch_vertices[0], branch.branch_vertices[1], branch.parent.branch_vertices[0], branch.parent.branch_vertices[1]);
-            } else {
-                this.m_canvas_helper.DrawLine(branch.parent.position, branch.position, branch.thickness);
-            }
+        if (branch.is_vertices_set && branch.parent.is_vertices_set) {
+            this.m_canvas_helper.DrawRect2D(branch.branch_vertices[0], branch.branch_vertices[1], branch.parent.branch_vertices[0], branch.parent.branch_vertices[1]);
+        } else {
+            this.m_canvas_helper.DrawLine(branch.parent.position, branch.position, branch.thickness);
         }
     }
 

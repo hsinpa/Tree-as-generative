@@ -25,3 +25,13 @@ export function GetImagePromise(imagePath : string) {
 export function Lerp(a: number, b : number, t : number) {
     return (a * (1 - t)) + (b * t);
 }
+
+export function LoopOps<T>(list: T[], callback : (target: T) => void ) {
+    if (list == null || callback == null) return;
+
+    let length = list.length;
+
+    for (let i = length -1; i >= 0; i--) {
+        callback( list[i] );
+    }
+}

@@ -73,11 +73,15 @@ export default class SC_Director {
 
         if (mouse_event == MouseEvent.Up) this.on_mouse_up();
         if (mouse_event == MouseEvent.Down) this.on_mouse_down();
+
+        this.on_mouse_move();
     }
 
     private on_mouse_up() {
         this.m_mode = Mode.Idle;
         this.m_interact_branch = null;
+
+        this.m_space_colonization.rebuild_kd_tree();
     }
 
     private on_mouse_down() {
@@ -89,12 +93,21 @@ export default class SC_Director {
         for (let i = 0; i < filter_lens; i++) {
             let process_branch = branches[ filter_branches[i] ];
 
-            if (process_branch.count == 0) {
+            if (process_branch.is_valid_endpoint) {
                 this.m_mode = Mode.Interaction;
                 this.m_interact_branch = process_branch;
             }
         }
     }
+
+    private on_mouse_move() {
+        if (this.m_mode == Mode.Idle || this.m_interact_branch == null) return;
+        
+
+        this.m_interact_branch.position[0] = this.m_mouse_position[0];
+        this.m_interact_branch.position[1] = this.m_mouse_position[1];
+    }
+
 
     private on_ctrl_point_draw(branch: SC_Branch) {
         if (branch == this.m_interact_branch) {

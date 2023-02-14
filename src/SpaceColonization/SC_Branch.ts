@@ -22,11 +22,9 @@ export class SC_Branch {
 
     children : SC_Branch[] = [];
     parent: SC_Branch;
-    count: number = 0;
-
-    branch_vertices: vec2[];
     branch_leaf: SC_Leaf[];
 
+    count: number = 0;
     candidate_count = 0;
     max_candidate = 15;
 
@@ -37,6 +35,11 @@ export class SC_Branch {
     original_style: Color;
 
     kinematic_flag : KinematicFlag = KinematicFlag.None;
+
+    //Vertices
+    branch_vertices: vec2[];
+    private branch_direction_side: vec2;
+    private branch_width: vec2;
 
     public is_valid_endpoint : boolean = false;
 
@@ -54,6 +57,9 @@ export class SC_Branch {
         this.id = uuidv4();
         this.position = p_postion;
         this.parent = p_parent;
+
+        this.branch_direction_side = vec2.create();
+        this.branch_width = vec2.create();
         
         this.original_style = new Color(220, 50, 50, 0.5);
         this.style = Object.assign(new Color(), this.original_style);
@@ -102,10 +108,15 @@ export class SC_Branch {
 
             //let rot_diff = vec2.dot(this.direction, this.parent.direction);
 
-        let sideDirection = vec2.rotate(vec2.create(), this.direction, vec2.fromValues(0, 0), Math.PI * 0.5);
-        let sideOffset = vec2.scale(vec2.create(), sideDirection,  thickness);
-        this.branch_vertices[0] = vec2.add(this.branch_vertices[0], this.position, sideOffset);
-        this.branch_vertices[1] = vec2.subtract(this.branch_vertices[1], this.position, sideOffset);
+        this.rebuild_vertices(thickness);
+    }
+
+    public rebuild_vertices(thickness: number) {
+        vec2.rotate(this.branch_direction_side, this.direction, vec2.fromValues(0, 0), Math.PI * 0.5);
+        vec2.scale(this.branch_width, this.branch_direction_side,  thickness);
+
+        this.branch_vertices[0] = vec2.add(this.branch_vertices[0], this.position, this.branch_width);
+        this.branch_vertices[1] = vec2.subtract(this.branch_vertices[1], this.position, this.branch_width);
     }
 
     private set_branch_helper(thickness: number, threshold: number, buffer: number, enumType : BranchEnum ) {
