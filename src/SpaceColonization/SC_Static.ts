@@ -5,6 +5,8 @@ export const ImagesPath = Object.freeze({
 });
 
 export const Config = Object.freeze({
+    Branch_Length: 20,
+
     Leaf_ThinBranch_Rate: 0.5,
     Leaf_Endpoint_Rate: 0.8,
 

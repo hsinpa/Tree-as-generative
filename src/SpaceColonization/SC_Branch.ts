@@ -2,6 +2,8 @@ import {vec2 } from 'gl-matrix';
 import { v4 as uuidv4 } from 'uuid';
 import {Clamp, NormalizeToBase} from '../Hsinpa/UtilityFunc'
 import SC_Leaf from './SC_Leaf';
+import {Config} from './SC_Static';
+
 import Color from '../Hsinpa/Color';
 
 const thickness_modifier = 0.6;
@@ -16,9 +18,13 @@ export interface BranchType {
 
 export class SC_Branch {
     id: string;
+
+    //Transform
     position : vec2;
-    direction: vec2;
-    original_direction: vec2;
+    direction: vec2; 
+
+    static_position: vec2 = vec2.create();
+    static_direction: vec2;
 
     children : SC_Branch[] = [];
     parent: SC_Branch;
@@ -56,6 +62,9 @@ export class SC_Branch {
     constructor(p_postion : vec2, p_parent : SC_Branch) {
         this.id = uuidv4();
         this.position = p_postion;
+        
+        vec2.copy(this.static_position, p_postion);
+
         this.parent = p_parent;
 
         this.branch_direction_side = vec2.create();
@@ -66,7 +75,7 @@ export class SC_Branch {
 
         this.branch_vertices = Array.of<vec2>(vec2.create(), vec2.create());
         this.direction = vec2.create();
-        this.original_direction = vec2.create();
+        this.static_direction = vec2.create();
         this.branch_leaf = [];
 
         if (this.parent != null) {
@@ -78,7 +87,7 @@ export class SC_Branch {
     }
 
     public reset() {
-        this.direction = vec2.copy(this.direction, this.original_direction);
+        this.direction = vec2.copy(this.direction, this.static_direction);
         this.count = 0;
     }
 
@@ -86,12 +95,12 @@ export class SC_Branch {
         this.direction = p_direction;
 
         if (p_replace_origin) {
-            vec2.copy(this.original_direction, this.direction);
+            vec2.copy(this.static_direction, this.direction);
         }
     }
 
     public next() {
-        let next_vector = vec2.scale(vec2.create(), this.direction, 20);
+        let next_vector = vec2.scale(vec2.create(), this.direction, Config.Branch_Length);
         let next_position = vec2.add(vec2.create(), this.position, next_vector);
         let child = new SC_Branch(next_position, this);
 

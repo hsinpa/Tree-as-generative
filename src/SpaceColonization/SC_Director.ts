@@ -3,7 +3,9 @@ import { MersenneTwister19937, Random } from "random-js";
 import Color from "../Hsinpa/Color";
 import { InputHandler, MouseEvent } from "../Hsinpa/Input/InputHandler";
 import SimpleCanvas from "../Hsinpa/SimpleCanvas";
+import { RelativeAngle } from "../Hsinpa/UtilityFunc";
 import WebglResource from "../Hsinpa/WebglResource";
+import { Kinematics } from "../Kinematic/Kinematic";
 import { SC_Branch } from "./SC_Branch";
 import SC_Canvas, {ConstructionType} from "./SC_Canvas";
 import {ImagesPath, Config} from './SC_Static';
@@ -18,6 +20,7 @@ export default class SC_Director {
     private m_rand_engine : Random;
     private m_resource: WebglResource;
     private m_inputHandler : InputHandler;
+    private m_kinematics : Kinematics;
 
     private m_mouse_position: vec2;
     private m_mode: Mode = Mode.Idle;
@@ -32,6 +35,7 @@ export default class SC_Director {
         this.m_mouse_position = vec2.create();
         this.m_inputHandler = new InputHandler();
         this.m_resource = new WebglResource();
+        this.m_kinematics = new Kinematics();
         this.m_simple_canvas = new SimpleCanvas(canvas_dom_query);
         this.m_sc_canvas = new SC_Canvas(this.m_simple_canvas, this.m_space_colonization, this.m_rand_engine, this.m_resource);
 
@@ -87,7 +91,7 @@ export default class SC_Director {
     private on_mouse_down() {
         let kd_branch : KDBush<SC_Branch> = this.m_space_colonization.BranchKD;
         let branches = this.m_space_colonization.Branches;
-        let filter_branches = kd_branch.within(this.m_mouse_position[0], this.m_mouse_position[1], 10);
+        let filter_branches = kd_branch.within(this.m_mouse_position[0], this.m_mouse_position[1], 15);
         let filter_lens = filter_branches.length;
 
         for (let i = 0; i < filter_lens; i++) {
@@ -102,10 +106,10 @@ export default class SC_Director {
 
     private on_mouse_move() {
         if (this.m_mode == Mode.Idle || this.m_interact_branch == null) return;
-        
 
-        this.m_interact_branch.position[0] = this.m_mouse_position[0];
-        this.m_interact_branch.position[1] = this.m_mouse_position[1];
+        this.m_kinematics.Process(this.m_interact_branch, this.m_mouse_position);
+        // this.m_interact_branch.position[0] = this.m_mouse_position[0];
+        // this.m_interact_branch.position[1] = this.m_mouse_position[1];
     }
 
 
