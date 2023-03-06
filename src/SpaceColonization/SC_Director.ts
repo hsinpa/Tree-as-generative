@@ -3,7 +3,6 @@ import { MersenneTwister19937, Random } from "random-js";
 import Color from "../Hsinpa/Color";
 import { InputHandler, MouseEvent } from "../Hsinpa/Input/InputHandler";
 import SimpleCanvas from "../Hsinpa/SimpleCanvas";
-import { RelativeAngle } from "../Hsinpa/UtilityFunc";
 import WebglResource from "../Hsinpa/WebglResource";
 import { Kinematics } from "../Kinematic/Kinematic";
 import { SC_Branch } from "./SC_Branch";
@@ -54,7 +53,10 @@ export default class SC_Director {
 
     private update() {
         //this._inputHandler.OnUpdate();
-        
+
+        if (this.m_mode == Mode.Interaction && this.m_interact_branch != null)
+            this.m_kinematics.Process(this.m_interact_branch, this.m_mouse_position);
+
         if (this.m_sc_canvas.construct_flag != ConstructionType.Complete) {
             this.m_sc_canvas.construct_on_the_fly();            
         } else {
@@ -77,8 +79,6 @@ export default class SC_Director {
 
         if (mouse_event == MouseEvent.Up) this.on_mouse_up();
         if (mouse_event == MouseEvent.Down) this.on_mouse_down();
-
-        this.on_mouse_move();
     }
 
     private on_mouse_up() {
@@ -104,15 +104,6 @@ export default class SC_Director {
         }
     }
 
-    private on_mouse_move() {
-        if (this.m_mode == Mode.Idle || this.m_interact_branch == null) return;
-
-        this.m_kinematics.Process(this.m_interact_branch, this.m_mouse_position);
-        // this.m_interact_branch.position[0] = this.m_mouse_position[0];
-        // this.m_interact_branch.position[1] = this.m_mouse_position[1];
-    }
-
-
     private on_ctrl_point_draw(branch: SC_Branch) {
         if (branch == this.m_interact_branch) {
             branch.style.copy_value(Config.Leaf_Interact_Color);
@@ -124,8 +115,6 @@ export default class SC_Director {
         
         let interact_avail_dist = 30;
         if (distance < interact_avail_dist && this.mode == Mode.Idle) {
-            console.log("Hello friend");
-
             let new_color = Color.lerp(branch.original_style, Config.Leaf_Interact_Color, 1 - (distance / interact_avail_dist) );
             branch.style = new_color;
         } else {

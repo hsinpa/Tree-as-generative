@@ -37,11 +37,3 @@ export function LoopOps<T>(list: T[], callback : (target: T) => void ) {
         callback( list[i] );
     }
 }
-
-export function RelativeAngle(direction_a: vec2, direction_b: vec2) {
-    let dot = vec2.dot(direction_a, direction_b);
-    let dist_a = vec2.len(direction_a);
-    let dist_b = vec2.len(direction_b);
-
-    return Math.acos(dot / (dist_a * dist_b));
-}

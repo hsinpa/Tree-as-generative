@@ -53,6 +53,11 @@ export class SC_Branch {
         return (this.branch_vertices[0][0] != 0 && this.branch_vertices[0][1] != 0 && this.branch_vertices[1][0] != 0 && this.branch_vertices[1][1] != 0);
     }
 
+    public get is_root() {
+        return this.parent == null;
+    }
+
+
     public get thickness() { 
         let thickness = this.child_count * thickness_modifier;
         thickness = Clamp(thickness, thickness, 5);
@@ -96,6 +101,8 @@ export class SC_Branch {
 
         if (p_replace_origin) {
             vec2.copy(this.static_direction, this.direction);
+
+            //console.log(Math.atan2(this.static_direction[1], this.static_direction[0]));
         }
     }
 
