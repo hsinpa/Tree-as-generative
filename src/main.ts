@@ -1,6 +1,6 @@
 import './style.css'
 import  PhysicsParticles from './Physics/PhysicsParticle';
-import  SC_Director from './SpaceColonization/SC_Director';
+import  SC_Director from './SpaceColonization/SC_Director_V2';
 
 let urlParams = new URLSearchParams(window.location.search);
 let seed = undefined;

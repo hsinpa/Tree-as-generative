@@ -12,3 +12,8 @@ export const Config = Object.freeze({
 
     Leaf_Interact_Color: new Color(255, 10, 10, 0.9)
 });
+
+export const WorkerEventName = Object.freeze({
+    World_Config: 'world_config',
+    World_Is_Create: 'world_is_create',
+});

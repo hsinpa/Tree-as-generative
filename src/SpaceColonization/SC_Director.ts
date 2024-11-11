@@ -54,14 +54,15 @@ export default class SC_Director {
     private update() {
         //this._inputHandler.OnUpdate();
 
-        if (this.m_mode == Mode.Interaction && this.m_interact_branch != null)
-            this.m_kinematics.Process(this.m_interact_branch, this.m_mouse_position);
+        // if (this.m_mode == Mode.Interaction && this.m_interact_branch != null)
+        //     this.m_kinematics.Process(this.m_interact_branch, this.m_mouse_position);
 
         if (this.m_sc_canvas.construct_flag != ConstructionType.Complete) {
             this.m_sc_canvas.construct_on_the_fly();            
-        } else {
-            this.m_sc_canvas.render(this.on_ctrl_point_draw.bind(this));
         }
+        //  else {
+        //     this.m_sc_canvas.render(this.on_ctrl_point_draw.bind(this));
+        // }
 
         window.requestAnimationFrame(this.update.bind(this));
     }
@@ -85,11 +86,11 @@ export default class SC_Director {
         this.m_mode = Mode.Idle;
         this.m_interact_branch = null;
 
-        this.m_space_colonization.rebuild_kd_tree();
+        this.m_space_colonization.rebuild_kd_branches();
     }
 
     private on_mouse_down() {
-        let kd_branch : KDBush<SC_Branch> = this.m_space_colonization.BranchKD;
+        let kd_branch = this.m_space_colonization.BranchKD;
         let branches = this.m_space_colonization.Branches;
         let filter_branches = kd_branch.within(this.m_mouse_position[0], this.m_mouse_position[1], 15);
         let filter_lens = filter_branches.length;

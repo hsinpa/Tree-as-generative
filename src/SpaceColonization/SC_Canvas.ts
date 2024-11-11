@@ -43,7 +43,7 @@ export default class SC_Canvas {
         let attractor_spawn_rect = new Rect(this.m_simple_canvas.ScreenWidth * 0.2, 0, this.m_simple_canvas.ScreenWidth * 0.6, attractor_y);
 
         this.m_space_colonization.spawn_attractor(attractor_spawn_rect, 200);
-        this.m_space_colonization.spawn_free_branch(this.m_simple_canvas.ScreenWidth * 0.5, this.m_simple_canvas.ScreenHeight);
+        // this.m_space_colonization.spawn_free_branch(this.m_simple_canvas.ScreenWidth * 0.5, this.m_simple_canvas.ScreenHeight);
     }
 
     public construct_on_the_fly() {
@@ -56,16 +56,16 @@ export default class SC_Canvas {
 
                 LoopOps(this.m_space_colonization.Branches, (x) => {this.draw_branch(x)});
             
-                let update_branch_num = this.m_space_colonization.grow_branch();
-                this.m_space_colonization.calculate_branch_width();    
+                // let update_branch_num = this.m_space_colonization.grow_branch();
+                // this.m_space_colonization.calculate_branch_width();    
 
-                if (update_branch_num == 0) {
-                    this.m_space_colonization.Branches.forEach(x => {
-                        this.calculate_leaf(x);
-                    });
+                // if (update_branch_num == 0) {
+                //     this.m_space_colonization.Branches.forEach(x => {
+                //         this.calculate_leaf(x);
+                //     });
 
-                    this.m_construction_flag = ConstructionType.Leaf;
-                };        
+                //     this.m_construction_flag = ConstructionType.Leaf;
+                // };        
             }
 
             case ConstructionType.Leaf: {

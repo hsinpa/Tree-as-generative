@@ -47,3 +47,8 @@ export class Rect {
         return this.y + this.m_height;
     }
 }
+
+export interface IWorkerEvent {
+    event: string,
+    data?: any,
+}

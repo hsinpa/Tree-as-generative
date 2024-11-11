@@ -1,10 +1,8 @@
-import {MersenneTwister19937, Random } from 'random-js';
+import { Random } from 'random-js';
 import {vec2 } from 'gl-matrix';
 import { SC_Branch } from './SC_Branch';
 import { Rect } from './SC_Types';
 import KDBush from "kdbush";
-import {PhysicsWorkerProtocol} from '../Physics/PhysicsWorkerProtocol';
-
 
 export interface SC_Node {
     position : vec2,
@@ -14,13 +12,11 @@ export interface SC_Node {
 interface KD_EndPoints { [key: string]: SC_Branch; }
 
 export class SpaceColonization {
-
-    private m_workers : PhysicsWorkerProtocol;
     private m_rand_engine : Random;
     private m_leaves : SC_Node[] = [];
     private m_branches : SC_Branch[] = [];
-    private m_kd_candidates : KDBush<SC_Node> = null;
-    private m_kd_branches : KDBush<SC_Branch> = null;
+    private m_kd_candidates : KDBush = null;
+    private m_kd_branches : KDBush = null;
     private m_kd_endpoints : KD_EndPoints = {};
     private m_endpoints: SC_Branch[] = [];
 
@@ -47,11 +43,12 @@ export class SpaceColonization {
         this.m_min_distance = min_distance;
         this.m_max_distance = max_distance;
         this.m_rand_engine = random_engine;
-
-        this.m_workers = new  PhysicsWorkerProtocol();
     } 
 
     public spawn_attractor(rect: Rect, spawn_length) {
+
+        this.m_kd_candidates = new KDBush(spawn_length);
+
         this.m_leaves = [];
         for (let i = 0; i < spawn_length; i++) {
             let random_x = this.m_rand_engine.integer( rect.xMin, rect.xMax);
@@ -59,10 +56,10 @@ export class SpaceColonization {
 
             let point = vec2.fromValues(random_x, random_y);
             this.m_leaves.push( {position : point, reached: false} );
+            this.m_kd_candidates.add(point[0], point[1]);
+
             //console.log(`RandomX ${random_x}, RandomY ${random_y}`);
         }
-
-        this.m_kd_candidates = new KDBush(this.m_leaves, (n) => n.position[0],(n) => n.position[1], this.m_leaves.length, Float32Array);
     }
 
     public spawn_free_branch(root_x: number, root_y: number) {
@@ -105,7 +102,12 @@ export class SpaceColonization {
             current_branch = null;
         }
 
-        this.m_kd_branches = new KDBush(this.m_branches, (n) => n.position[0],(n) => n.position[1], this.m_leaves.length, Float32Array);
+        let branch_length = this.m_branches.length;
+        this.m_kd_branches = new KDBush(branch_length);
+
+        for (let branch_index= 0; branch_index < branch_length; branch_index++) {
+            this.m_kd_branches.add(this.m_branches[branch_index].position[0], this.m_branches[branch_index].position[1]);
+        }
     }
 
     /**
@@ -184,8 +186,8 @@ export class SpaceColonization {
             }
         }
 
-        this.m_kd_candidates = new KDBush(this.m_leaves, (n) => n.position[0],(n) => n.position[1], this.m_leaves.length, Float32Array);
-        this.m_kd_branches = new KDBush(this.m_branches, (n) => n.position[0],(n) => n.position[1], this.m_branches.length, Float32Array);
+        this.rebuild_kd_leaves();
+        this.rebuild_kd_branches();
 
         return update_branch;
     }
@@ -215,8 +217,23 @@ export class SpaceColonization {
         }
     }
 
-    public rebuild_kd_tree() {
-        this.m_kd_branches = new KDBush(this.m_branches, (n) => n.position[0],(n) => n.position[1], this.m_leaves.length, Float32Array);
+    public rebuild_kd_branches() {
+        // Rebuld Branch KD
+        let branch_length = this.m_branches.length;
+        this.m_kd_branches = new KDBush(branch_length);
+
+        for (let branch_index= 0; branch_index < branch_length; branch_index++) {
+            this.m_kd_branches.add(this.m_branches[branch_index].position[0], this.m_branches[branch_index].position[1]);
+        }
     }
 
+    public rebuild_kd_leaves() {
+        // Rebuld Leave KD
+        let leave_length = this.m_leaves.length;
+        this.m_kd_candidates = new KDBush(leave_length);
+
+        for (let leave_index= 0; leave_index < leave_length; leave_index++) {
+            this.m_kd_candidates.add(this.m_leaves[leave_index].position[0], this.m_leaves[leave_index].position[1]);
+        }
+    }
 }
