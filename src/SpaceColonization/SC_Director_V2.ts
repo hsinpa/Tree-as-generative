@@ -25,6 +25,7 @@ export default class SC_Director {
         switch (ev.data['event']){
             case WorkerEventName.World_Is_Create:
                 this.m_pixi_canvas.update_leaf(ev.data['data']['leaves']);
+                this.m_pixi_canvas.update_branch(ev.data['data']['branches']);
                 break;
         }
     }

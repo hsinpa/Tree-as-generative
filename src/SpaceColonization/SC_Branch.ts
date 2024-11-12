@@ -59,9 +59,17 @@ export class SC_Branch {
 
 
     public get thickness() { 
-        let thickness = this.child_count * thickness_modifier;
-        thickness = Clamp(thickness, thickness, 5);
-        return thickness;
+        let t = this.child_count * thickness_modifier;
+
+        // t = Clamp(t, t, 5);
+        return t;
+    }
+
+    public get_thickness() {
+        let t = this.child_count * thickness_modifier;
+
+        t = Clamp(t, t, 5);
+        return t;
     }
 
     constructor(p_postion : vec2, p_parent : SC_Branch) {

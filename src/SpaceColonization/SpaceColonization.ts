@@ -1,8 +1,10 @@
 import { Random } from 'random-js';
 import {vec2 } from 'gl-matrix';
-import { SC_Branch } from './SC_Branch';
+import { BranchEnum, SC_Branch } from './SC_Branch';
 import { Rect } from './SC_Types';
 import KDBush from "kdbush";
+import { Config } from './SC_Static';
+import SC_Leaf from './SC_Leaf';
 
 export interface SC_Node {
     position : vec2,
@@ -18,7 +20,6 @@ export class SpaceColonization {
     private m_kd_candidates : KDBush = null;
     private m_kd_branches : KDBush = null;
     private m_kd_endpoints : KD_EndPoints = {};
-    private m_endpoints: SC_Branch[] = [];
 
     private m_min_distance : number;
     private m_max_distance : number;
@@ -33,10 +34,6 @@ export class SpaceColonization {
 
     public get BranchKD() {
         return this.m_kd_branches;
-    }
-
-    public get EndPoints() {
-        return this.m_endpoints;
     }
 
     constructor(min_distance : number, max_distance : number, random_engine : Random) {
@@ -60,6 +57,8 @@ export class SpaceColonization {
 
             //console.log(`RandomX ${random_x}, RandomY ${random_y}`);
         }
+
+        this.m_kd_candidates.finish();
     }
 
     public spawn_free_branch(root_x: number, root_y: number) {
@@ -102,12 +101,7 @@ export class SpaceColonization {
             current_branch = null;
         }
 
-        let branch_length = this.m_branches.length;
-        this.m_kd_branches = new KDBush(branch_length);
-
-        for (let branch_index= 0; branch_index < branch_length; branch_index++) {
-            this.m_kd_branches.add(this.m_branches[branch_index].position[0], this.m_branches[branch_index].position[1]);
-        }
+        this.m_kd_branches = this.rebuild_kd_branches(this.m_branches);
     }
 
     /**
@@ -186,8 +180,8 @@ export class SpaceColonization {
             }
         }
 
-        this.rebuild_kd_leaves();
-        this.rebuild_kd_branches();
+        this.m_kd_candidates = this.rebuild_kd_leaves(this.m_leaves);
+        this.m_kd_branches = this.rebuild_kd_branches(this.m_branches);
 
         return update_branch;
     }
@@ -217,23 +211,63 @@ export class SpaceColonization {
         }
     }
 
-    public rebuild_kd_branches() {
-        // Rebuld Branch KD
-        let branch_length = this.m_branches.length;
-        this.m_kd_branches = new KDBush(branch_length);
+    public calculate_leaf(source_branch: SC_Branch) {
+        if (source_branch.branch_leaf.length > 0) return;
+        if (source_branch.branch_type.type ==  BranchEnum.Thick_Branch) return;
+        
+        let spawn_percent = this.m_rand_engine.realZeroToOneInclusive();
+        
+        if (source_branch.branch_type.type == BranchEnum.Thin_Branch && spawn_percent > Config.Leaf_ThinBranch_Rate) return;
+        if (source_branch.branch_type.type == BranchEnum.Endpoint_Branch && spawn_percent > Config.Leaf_Endpoint_Rate) return;
 
-        for (let branch_index= 0; branch_index < branch_length; branch_index++) {
-            this.m_kd_branches.add(this.m_branches[branch_index].position[0], this.m_branches[branch_index].position[1]);
+        let spawn_leaf_length = this.m_rand_engine.integer(1, 3);
+
+        for (let i = 0; i < spawn_leaf_length; i++) {
+            let spawn_leaf_t = this.m_rand_engine.realZeroToOneExclusive();
+            let spawn_position = vec2.lerp(vec2.create(), source_branch.position, source_branch.parent.position, spawn_leaf_t);
+            spawn_position = vec2.subtract(spawn_position, spawn_position, source_branch.position);
+            
+            let rotation_range = 0.25;
+            let random_direction_x = (this.m_rand_engine.real(-1, 1) * Math.PI * rotation_range);
+            let random_direction_y = (this.m_rand_engine.real(-1, 1) * Math.PI * rotation_range);
+    
+            let random_direction_nor = vec2.fromValues(random_direction_x, random_direction_y);
+                                        vec2.normalize(random_direction_nor, random_direction_nor);
+    
+            let rotation = Math.atan2(random_direction_nor[1], random_direction_nor[0]);
+            let scale = 0.5;
+
+            let new_leaf = new SC_Leaf(source_branch, spawn_leaf_t, rotation, 0.5);
+            source_branch.branch_leaf.push(new_leaf);
         }
     }
 
-    public rebuild_kd_leaves() {
+
+    public rebuild_kd_branches(branches: SC_Branch[]) {
+        // Rebuld Branch KD
+        let branch_length = branches.length;
+        let kd_branches = new KDBush(branch_length);
+
+        for (let branch_index= 0; branch_index < branch_length; branch_index++) {
+            kd_branches.add(branches[branch_index].position[0], branches[branch_index].position[1]);
+        }
+        
+        kd_branches.finish();
+        
+        return kd_branches;
+    }
+
+    public rebuild_kd_leaves(leave_nodes: SC_Node[]) {
         // Rebuld Leave KD
-        let leave_length = this.m_leaves.length;
-        this.m_kd_candidates = new KDBush(leave_length);
+        let leave_length = leave_nodes.length;
+        let kd_candidates = new KDBush(leave_length);
 
         for (let leave_index= 0; leave_index < leave_length; leave_index++) {
-            this.m_kd_candidates.add(this.m_leaves[leave_index].position[0], this.m_leaves[leave_index].position[1]);
+            kd_candidates.add(leave_nodes[leave_index].position[0], leave_nodes[leave_index].position[1]);
         }
+
+        kd_candidates.finish();
+
+        return kd_candidates;
     }
 }
