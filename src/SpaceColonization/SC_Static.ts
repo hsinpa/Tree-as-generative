@@ -16,4 +16,10 @@ export const Config = Object.freeze({
 export const WorkerEventName = Object.freeze({
     World_Config: 'world_config',
     World_Is_Create: 'world_is_create',
+
+    WorldUpdate: 'world_update',
+    MouseInputStart: 'mouse_input_start',
+    MouseInputEnd: 'mouse_input_end',
+
+
 });

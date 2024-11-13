@@ -2,9 +2,7 @@ import { MersenneTwister19937, Random } from "random-js";
 import { Config, WorkerEventName } from "./SC_Static";
 import { IWorkerEvent, Rect } from "./SC_Types";
 import { SpaceColonization } from "./SpaceColonization";
-import { BranchEnum, SC_Branch } from "./SC_Branch";
 import { vec2 } from "gl-matrix";
-import SC_Leaf from "./SC_Leaf";
 
 console.log("Hello I am worker");
 
@@ -27,6 +25,7 @@ class SC_Worker {
         this.m_space_colonization.spawn_free_branch(width * 0.5, height);
 
         this.execute_grow_branch_recursion(this.m_space_colonization);
+        this.on_prepare_stage_completed(this.m_space_colonization);
 
         return this.m_space_colonization;
     }
@@ -37,14 +36,66 @@ class SC_Worker {
 
         if (update_branch_num == 0) {
             space_colonization.Branches.forEach(x => {
+                let parent = space_colonization.BranchDict.get(x.parent);
+
                 space_colonization.calculate_leaf(x);
+
+                if (parent != null) {
+                    vec2.subtract(x.direction, x.position, parent.position);
+                    vec2.normalize(x.direction, x.direction);
+                }
+                
+                x.rebuild_vertices(x.thickness);
             });
 
             return;
         };
-        
+
         this.execute_grow_branch_recursion(space_colonization);
     }
+
+    private on_prepare_stage_completed(space_colonization: SpaceColonization) {
+        let maxBranchLens =  space_colonization.Branches.length;
+        const maxEndpointThreshold = 10;
+
+        for (let i = 0; i < maxBranchLens; i++) {
+            let branch = space_colonization.Branches[i];
+            let parent_branch = space_colonization.BranchDict.get(branch.parent);
+            
+            if (branch.child_count == 1) {
+
+                let length = 0;
+                let length_checked = false;
+                let check_branch = branch;
+
+                while (!length_checked) {
+                    length++;
+
+                    if (length > maxEndpointThreshold) {
+                        length_checked = true;
+                        continue;
+                    };
+
+                    if (check_branch.parent == undefined) {
+                        length_checked = true;
+                        continue;
+                    }
+
+                    if (parent_branch != undefined && parent_branch.child_count - check_branch.child_count > 1) {
+                        length_checked = true;
+                        continue;
+                    }
+
+                    check_branch = parent_branch;
+                }
+
+
+                if(length >= maxEndpointThreshold)
+                    branch.is_valid_endpoint = true;
+            }
+        }
+    }
+
 
     private get_random_engine(seed?: number) : Random {
         if (seed == undefined) {
@@ -66,11 +117,11 @@ self.onmessage = (msg) => {
         case WorkerEventName.World_Config:
             let space_colonization = sc_worker.execute_sc_colonization_creation(event_dict.data['width'], event_dict.data['height'], event_dict.data['seed']);
 
+
             postMessage({
                 'event': WorkerEventName.World_Is_Create,
                 'data': {
                     'branch_kd': space_colonization.BranchKD.data,
-                    'leaves': space_colonization.Leaves,
                     'branches': space_colonization.Branches,
                 }
             });

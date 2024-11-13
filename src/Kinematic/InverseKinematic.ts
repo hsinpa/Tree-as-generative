@@ -1,5 +1,4 @@
 import { vec2 } from "gl-matrix";
-import { Dictionary } from "typescript-collections";
 import {Clamp} from '../Hsinpa/UtilityFunc';
 import { SC_Branch } from "../SpaceColonization/SC_Branch";
 

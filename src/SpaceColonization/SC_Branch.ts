@@ -26,8 +26,8 @@ export class SC_Branch {
     static_position: vec2 = vec2.create();
     static_direction: vec2;
 
-    children : SC_Branch[] = [];
-    parent: SC_Branch;
+    children : string[] = [];
+    parent: string;
     branch_leaf: SC_Leaf[];
 
     count: number = 0;
@@ -78,8 +78,6 @@ export class SC_Branch {
         
         vec2.copy(this.static_position, p_postion);
 
-        this.parent = p_parent;
-
         this.branch_direction_side = vec2.create();
         this.branch_width = vec2.create();
         
@@ -91,8 +89,9 @@ export class SC_Branch {
         this.static_direction = vec2.create();
         this.branch_leaf = [];
 
-        if (this.parent != null) {
-            vec2.subtract(this.direction, this.position, this.parent.position);
+        if (p_parent != null) {
+            this.parent = p_parent.id;
+            vec2.subtract(this.direction, this.position, p_parent.position);
             vec2.normalize(this.direction, this.direction);
 
             this.set_direction(this.direction, true);
@@ -119,7 +118,7 @@ export class SC_Branch {
         let next_position = vec2.add(vec2.create(), this.position, next_vector);
         let child = new SC_Branch(next_position, this);
 
-        this.children.push(child);
+        this.children.push(child.id);
 
         return child;
     }

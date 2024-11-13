@@ -17,6 +17,9 @@ export class SpaceColonization {
     private m_rand_engine : Random;
     private m_leaves : SC_Node[] = [];
     private m_branches : SC_Branch[] = [];
+    private m_branch_dict: Map<string, SC_Branch>;
+
+
     private m_kd_candidates : KDBush = null;
     private m_kd_branches : KDBush = null;
     private m_kd_endpoints : KD_EndPoints = {};
@@ -32,14 +35,21 @@ export class SpaceColonization {
         return this.m_branches;
     }
 
+    public get BranchDict() {
+        return this.m_branch_dict;
+    }
+
     public get BranchKD() {
         return this.m_kd_branches;
     }
+
+
 
     constructor(min_distance : number, max_distance : number, random_engine : Random) {
         this.m_min_distance = min_distance;
         this.m_max_distance = max_distance;
         this.m_rand_engine = random_engine;
+        this.m_branch_dict = new Map();
     } 
 
     public spawn_attractor(rect: Rect, spawn_length) {
@@ -68,6 +78,7 @@ export class SpaceColonization {
             root.direction = vec2.fromValues(0, -1);
 
         this.m_branches.push(root);
+        this.m_branch_dict.set(root.id, root);
 
         let current_branch = root;
         let leaves_lens = this.m_leaves.length;
@@ -95,6 +106,7 @@ export class SpaceColonization {
                 current_branch = branch;
 
                 this.m_branches.push(branch);
+                this.m_branch_dict.set(branch.id, branch);
                 continue;
             }
 
@@ -175,6 +187,7 @@ export class SpaceColonization {
                 }
 
                 this.m_branches.push(nextBranch);
+                this.m_branch_dict.set(nextBranch.id, nextBranch);
 
                 branch.reset();
             }
@@ -195,9 +208,7 @@ export class SpaceColonization {
 
             while (current_branch != null) {
                 current_branch.set_branch_type(current_branch.thickness);
-                
-                let parent_branch = current_branch.parent;
-
+                let parent_branch = this.m_branch_dict.get(current_branch.parent);
                 if (parent_branch == null) break;
                 
                 if (parent_branch.child_count <= current_branch.child_count) {
@@ -220,11 +231,12 @@ export class SpaceColonization {
         if (source_branch.branch_type.type == BranchEnum.Thin_Branch && spawn_percent > Config.Leaf_ThinBranch_Rate) return;
         if (source_branch.branch_type.type == BranchEnum.Endpoint_Branch && spawn_percent > Config.Leaf_Endpoint_Rate) return;
 
+        let parent_branch = this.m_branch_dict.get(source_branch.parent);
         let spawn_leaf_length = this.m_rand_engine.integer(1, 3);
 
         for (let i = 0; i < spawn_leaf_length; i++) {
             let spawn_leaf_t = this.m_rand_engine.realZeroToOneExclusive();
-            let spawn_position = vec2.lerp(vec2.create(), source_branch.position, source_branch.parent.position, spawn_leaf_t);
+            let spawn_position = vec2.lerp(vec2.create(), source_branch.position, parent_branch.position, spawn_leaf_t);
             spawn_position = vec2.subtract(spawn_position, spawn_position, source_branch.position);
             
             let rotation_range = 0.25;

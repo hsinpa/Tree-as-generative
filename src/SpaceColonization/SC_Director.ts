@@ -86,7 +86,7 @@ export default class SC_Director {
         this.m_mode = Mode.Idle;
         this.m_interact_branch = null;
 
-        this.m_space_colonization.rebuild_kd_branches();
+        // this.m_space_colonization.rebuild_kd_branches();
     }
 
     private on_mouse_down() {

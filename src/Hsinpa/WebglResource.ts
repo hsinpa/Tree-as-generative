@@ -1,29 +1,28 @@
-import {Dictionary} from 'typescript-collections';
 import {GetImagePromise} from './UtilityFunc';
 
 class WebglResource {
-    textureCache : Dictionary<string, HTMLImageElement>;
+    textureCache : Map<string, HTMLImageElement>;
 
     constructor() {
-        this.textureCache = new Dictionary();
+        this.textureCache = new Map();
     }
 
     async GetImage(path : string) : Promise<HTMLImageElement> {
 
-        if (this.textureCache.containsKey(path)) {
-            return this.textureCache.getValue(path);
+        if (this.textureCache.has(path)) {
+            return this.textureCache.get(path);
         }
 
         let texture = await GetImagePromise(path);
-        this.textureCache.setValue(path, texture);
+        this.textureCache.set(path, texture);
 
         return texture;         
     }
 
     
     ForceGetImage(path : string) : HTMLImageElement | null {
-        if (this.textureCache.containsKey(path)) {
-            return this.textureCache.getValue(path);
+        if (this.textureCache.has(path)) {
+            return this.textureCache.get(path);
         }
 
         return null;         
