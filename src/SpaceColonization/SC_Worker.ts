@@ -4,7 +4,7 @@ import { IWorkerEvent, Rect } from "./SC_Types";
 import { SpaceColonization } from "./SpaceColonization";
 import { vec2 } from "gl-matrix";
 
-console.log("Hello I am worker");
+console.log("Hello I am SC Worker");
 
 class SC_Worker {
     private m_rand_engine: Random;

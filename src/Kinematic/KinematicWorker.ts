@@ -1,5 +1,18 @@
 import { WorkerEventName } from "../SpaceColonization/SC_Static";
 import { IWorkerEvent } from "../SpaceColonization/SC_Types";
+import { Kinematics } from "./Kinematic";
+
+console.log("Hello I am Kinematic Worker");
+
+class KinematicsWorker {
+    m_kinematics: Kinematics;
+
+    constructor() {
+        this.m_kinematics = new Kinematics();
+    }
+}
+
+const kinematics_worker = new KinematicsWorker();
 
 self.onmessage = (msg) => {
     const event_dict: IWorkerEvent = msg.data;

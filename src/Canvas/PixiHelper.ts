@@ -14,6 +14,7 @@ export let Drawsphere = function(
     let graphics = source;
     if (graphics == undefined)
         graphics = new Graphics();
+    graphics.clear();
     
     graphics    
     .circle(x, y, radius)
@@ -60,6 +61,6 @@ export let DrawImage = function(texture: Texture, position: vec2, options: Image
     sprite.x = (position[0]);
     sprite.y =  (position[1]);
     sprite.rotation = options.rotation;
-
+    
     return sprite;
 }

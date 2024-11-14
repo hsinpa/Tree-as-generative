@@ -5,11 +5,14 @@ export default class Color {
     private _r: number = 0;
     private _g: number = 0;
     private _b: number = 0;
+    private _color_array: Array<number> = [0,0,0]
 
     get a() { return this._a};
     get r() { return this._r};
     get g() { return this._g};
     get b() { return this._b};
+
+
 
     set a(v: number) {
         this._a = v;
@@ -32,6 +35,14 @@ export default class Color {
     }
 
     private _style: string = "rgba(0, 0, 0, 1)";
+
+    get color_array() {
+        this._color_array[0] = this._r / 255;
+        this._color_array[1] = this._g / 255;
+        this._color_array[2] = this._b / 255;
+        
+        return this._color_array;
+    }
 
     get style() {
         return this._style;

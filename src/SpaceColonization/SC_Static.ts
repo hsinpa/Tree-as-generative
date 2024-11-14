@@ -10,7 +10,7 @@ export const Config = Object.freeze({
     Leaf_ThinBranch_Rate: 0.5,
     Leaf_Endpoint_Rate: 0.8,
 
-    Leaf_Interact_Color: new Color(255, 10, 10, 0.9)
+    Leaf_Interact_Color: new Color(20, 20, 255, 1)
 });
 
 export const WorkerEventName = Object.freeze({

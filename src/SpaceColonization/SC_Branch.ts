@@ -155,6 +155,15 @@ export class SC_Branch {
         }
     }
 
+    static convert(raw_object: SC_Branch) {
+        let clone_branch = new SC_Branch(vec2.fromValues(0,0), null);
+        Object.assign(clone_branch, raw_object);
+
+        clone_branch.style = Object.assign(new Color(), raw_object.style);
+        clone_branch.original_style = Object.assign(new Color(), raw_object.original_style);
+
+        return clone_branch;
+    }
 
 
 }
