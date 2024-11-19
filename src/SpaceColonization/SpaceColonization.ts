@@ -19,7 +19,6 @@ export class SpaceColonization {
     private m_branches : SC_Branch[] = [];
     private m_branch_dict: Map<string, SC_Branch>;
 
-
     private m_kd_candidates : KDBush = null;
     private m_kd_branches : KDBush = null;
     private m_kd_endpoints : KD_EndPoints = {};
@@ -42,8 +41,6 @@ export class SpaceColonization {
     public get BranchKD() {
         return this.m_kd_branches;
     }
-
-
 
     constructor(min_distance : number, max_distance : number, random_engine : Random) {
         this.m_min_distance = min_distance;

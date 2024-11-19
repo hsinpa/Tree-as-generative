@@ -145,7 +145,7 @@ class PixiCanvas {
         }
     }
 
-    private on_ctrl_point_draw(mouse_position: vec2) {
+    public get_closest_endpoint(mouse_position: vec2) {
         let mouse_x = mouse_position[0];
         let mouse_y = mouse_position[1];
         let interact_avail_dist = 10;
@@ -156,22 +156,32 @@ class PixiCanvas {
         //     return;
         // }
 
+        // for (let i = 0 ; i < this.m_end_point_list.length; i++) {
+        //     let branch = this.m_end_point_list[i];
+        //     let distance = vec2.distance(branch.position, mouse_position);
+
+        //     if (distance <= interact_avail_dist) {
+        //         let t = Clamp(1 - (distance / interact_avail_dist), 1, 0);
+
+        //         // let new_color = H_Color.default.lerp(branch.original_style, Config.Leaf_Interact_Color, t);
+        //         // new_color.a = 1;
+        //         branch.style = new H_Color.default(0, 0, 255, 1);
+        //     } else {
+        //         branch.style = branch.original_style;    
+        //     }
+        // }
+
         for (let i = 0 ; i < this.m_end_point_list.length; i++) {
             let branch = this.m_end_point_list[i];
             let distance = vec2.distance(branch.position, mouse_position);
 
             if (distance <= interact_avail_dist) {
-                let t = Clamp(1 - (distance / interact_avail_dist), 1, 0);
-
-                // let new_color = H_Color.default.lerp(branch.original_style, Config.Leaf_Interact_Color, t);
-                // new_color.a = 1;
-                branch.style = new H_Color.default(0, 0, 255, 1);
-            } else {
-                branch.style = branch.original_style;    
+                return branch;
             }
         }
-    }
 
+        return null;
+    }
 
     public init_branch(branches: SC_Branch[]) {
         for (let i = 0; i < branches.length; i++) {
@@ -188,13 +198,10 @@ class PixiCanvas {
         console.log('this.m_end_point_list length', this.m_end_point_list.length);
     }
 
-    public render(ticker: Ticker, mouse_position: vec2) {
+    public render(ticker: Ticker) {
         this.m_branch_dict.forEach((branch, key) => {
             this.draw_branch(branch);
         });
-
-
-        this.on_ctrl_point_draw(mouse_position);
     }
 }
 

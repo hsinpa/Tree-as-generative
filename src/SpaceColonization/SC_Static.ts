@@ -18,8 +18,5 @@ export const WorkerEventName = Object.freeze({
     World_Is_Create: 'world_is_create',
 
     WorldUpdate: 'world_update',
-    MouseInputStart: 'mouse_input_start',
-    MouseInputEnd: 'mouse_input_end',
-
-
+    ModeInteraction: 'mode_interaction',
 });

@@ -8,8 +8,8 @@ export class Kinematics {
     private m_invereseKinematic : InverseKinematic;
 
     constructor() {
-        this.m_forwardKinematic = new ForwardKinematic();
-        this.m_invereseKinematic = new InverseKinematic();
+        // this.m_forwardKinematic = new ForwardKinematic();
+        // this.m_invereseKinematic = new InverseKinematic();
     }
 
     public Process(target_branch: SC_Branch, head_position: vec2) {

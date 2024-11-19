@@ -10,8 +10,11 @@ export class ForwardKinematic {
     private m_zero_vector = vec2.create();
     private m_rotate_vector1 = vec2.create();
     private m_rotate_vector2 = vec2.create();
+    private m_branch_dict: Map<string, SC_Branch>;
 
-
+    constructor(branch_dict: Map<string, SC_Branch>) {
+        this.m_branch_dict = branch_dict;
+    }
 
     public Execute(root_branch: SC_Branch, ik_set: Set<string>) {
         this.m_open.splice(0, this.m_open.length);
@@ -21,36 +24,35 @@ export class ForwardKinematic {
         
         while (this.m_open.length > 0) {
             let current_branch = this.m_open[0];
+            let parent_branch = this.m_branch_dict.get(current_branch.parent);
 
             this.m_open.splice(0, 1);
 
-            if (current_branch.children != null) current_branch.children.forEach(x=> this.m_open.push(x));
+            if (current_branch.children != null) current_branch.children.forEach(x=> this.m_open.push(                
+                this.m_branch_dict.get(x)
+            ));
 
             //Ignore branch, which is already manipulate by IK
             if (ik_set.has(current_branch.id)) continue;
 
-            let length = vec2.dist(current_branch.static_position, current_branch.parent.static_position);
+            let length = vec2.dist(current_branch.static_position, parent_branch.static_position);
 0
-            let relative_angle = vec2.angle(current_branch.parent.static_direction, current_branch.parent.direction) ;// RelativeAngle(current_branch.parent.static_direction, current_branch.static_direction);
+            let relative_angle = vec2.angle(parent_branch.static_direction, parent_branch.direction) ;// RelativeAngle(current_branch.parent.static_direction, current_branch.static_direction);
             if (relative_angle < 0.001 && relative_angle > -0.001) relative_angle = 0;
 
 
-            let candidate_angle_left = vec2.rotate(this.m_rotate_vector1, current_branch.parent.static_direction, this.m_zero_vector, -relative_angle);
-            let candidate_angle_right = vec2.rotate(this.m_rotate_vector2, current_branch.parent.static_direction, this.m_zero_vector, relative_angle);
+            let candidate_angle_left = vec2.rotate(this.m_rotate_vector1, parent_branch.static_direction, this.m_zero_vector, -relative_angle);
+            let candidate_angle_right = vec2.rotate(this.m_rotate_vector2, parent_branch.static_direction, this.m_zero_vector, relative_angle);
 
-            let direction_scale = (vec2.dist(candidate_angle_right, current_branch.parent.direction) <  vec2.dist(candidate_angle_left, current_branch.parent.direction)) ? 1 : -1;
+            let direction_scale = (vec2.dist(candidate_angle_right, parent_branch.direction) <  vec2.dist(candidate_angle_left, parent_branch.direction)) ? 1 : -1;
 
             this.m_cache_direction = vec2.rotate(this.m_cache_direction, current_branch.static_direction, this.m_zero_vector,  (relative_angle * direction_scale ));
 
             vec2.copy(current_branch.direction, this.m_cache_direction);
 
-            //console.log(current_branch.direction );
-
-
             vec2.scale(this.m_cache_direction, this.m_cache_direction, length);
             
-            vec2.add(current_branch.position, current_branch.parent.position, this.m_cache_direction);
+            vec2.add(current_branch.position, parent_branch.position, this.m_cache_direction);
         }
-        
     }
 }

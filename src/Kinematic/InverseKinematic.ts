@@ -7,11 +7,12 @@ export class InverseKinematic {
     private _cache_direction: vec2 = vec2.create();
     private _cache_position: vec2 = vec2.create();
     private _cache_head: vec2 = vec2.create();
+    private m_branch_dict: Map<string, SC_Branch>;
 
     ik_set: Set<string> = new Set<string>();
 
-    constructor() {
-
+    constructor(branch_dict: Map<string, SC_Branch>) {
+        this.m_branch_dict = branch_dict;
     }
 
     public Execute(head_branch: SC_Branch, head_position: vec2) {
@@ -21,16 +22,17 @@ export class InverseKinematic {
         let current_process_branch: SC_Branch = head_branch;
         let current_head = vec2.copy(this._cache_head, head_position);
 
-        while(current_process_branch != null && (!current_process_branch.parent.is_root) ) {
+        while(current_process_branch != null && (current_process_branch.parent == null) ) {
+            let parent_branch : SC_Branch | undefined = this.m_branch_dict.get(current_process_branch.parent);
             this.ik_set.add(current_process_branch.id);            
             this._open_list.push(current_process_branch);
 
             strength += decay * current_process_branch.thickness;
             strength = Clamp(strength, 1, 0);
 
-            let original_length = vec2.dist(current_process_branch.parent.position, current_process_branch.position);
+            let original_length = vec2.dist(parent_branch.position, current_process_branch.position);
 
-            vec2.subtract( this._cache_direction,  current_head, current_process_branch.parent.position);
+            vec2.subtract( this._cache_direction,  current_head, parent_branch.position);
             vec2.normalize(this._cache_direction, this._cache_direction); // Get Direction
 
             vec2.lerp(this._cache_direction, current_process_branch.static_direction, this._cache_direction, strength);
@@ -54,7 +56,7 @@ export class InverseKinematic {
 
             if (current_process_branch.parent == null) return current_process_branch;
 
-            current_process_branch = current_process_branch.parent;
+            current_process_branch = this.m_branch_dict.get(current_process_branch.parent);
         }
 
         this.backward_propagation(this._open_list);
@@ -68,15 +70,18 @@ export class InverseKinematic {
         //Bottom up
         for (let i = lens - 1; i >= 0; i--) {
             let current_process_branch: SC_Branch = record_branch[i];
+            let parent_branch: SC_Branch | undefined = this.m_branch_dict.get(current_process_branch.parent);
 
-            vec2.subtract( this._cache_direction,  current_process_branch.position, current_process_branch.parent.position);
+            if (parent_branch == null) continue;
+
+            vec2.subtract( this._cache_direction,  current_process_branch.position, parent_branch.position);
 
             vec2.normalize(this._cache_direction, this._cache_direction); // Get Direction
 
-            let original_length = vec2.dist(current_process_branch.parent.static_position, current_process_branch.static_position);
+            let original_length = vec2.dist(parent_branch.static_position, current_process_branch.static_position);
 
             vec2.scale(this._cache_position, this._cache_direction, original_length);
-            vec2.add(this._cache_position, this._cache_position, current_process_branch.parent.position);
+            vec2.add(this._cache_position, this._cache_position, parent_branch.position);
 
             current_process_branch.position[0] =  this._cache_position[0];
             current_process_branch.position[1] =  this._cache_position[1];
