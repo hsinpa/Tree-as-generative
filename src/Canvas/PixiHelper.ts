@@ -1,9 +1,26 @@
-import { Graphics, Sprite, Texture } from "pixi.js"
+import { Graphics, GraphicsPath, Sprite, Texture } from "pixi.js"
 import { ImageOption, RoundRectStruct } from "./CanvasHelper"
 import { vec2 } from "gl-matrix";
 
 export let DrawRoundRect = function(roundRect: RoundRectStruct) {
     let graphics = new Graphics();
+    return graphics;
+}
+
+export let DrawCtrlPoint = function({x, y, source = undefined }:
+     {x : number, y : number, source?: Graphics} ) {
+
+    let graphics = source;
+    if (graphics == undefined)
+        graphics = new Graphics();
+    graphics.clear();
+
+    graphics    
+    .circle(x, y, 14)
+    .fill([0, 0, 1, 1])
+    .circle(x, y, 10)
+    .fill([1, 1, 1, 1]);
+
     return graphics;
 }
 
@@ -35,23 +52,29 @@ export let DrawLine = function(point_a : vec2, point_b : vec2, thickness: number
     return realPath;
 }
 
-export let DrawRect2D = function(front_left : vec2, front_right : vec2, back_left : vec2, back_right : vec2, source?: Graphics) {
+export let DrawRect2D = function(front_left : vec2, front_right : vec2, back_left : vec2, back_right : vec2, 
+    fill_color: number[], source?: Graphics) {
     let graphics = source;
-    if (graphics == undefined)
+    if (graphics == undefined) {
         graphics = new Graphics();
+    }
 
+    graphics.clear();
     graphics.poly([ {x: front_left[0], y: front_left[1]}, {x: front_right[0], y: front_right[1]},
                     {x: back_right[0], y: back_right[1]}, {x: back_left[0], y: back_left[1]}
     ], true)
-    .fill([0,0,0])
+    .fill(fill_color)
+
 
     return graphics;
 }
 
 export let DrawImage = function(texture: Texture, position: vec2, options: ImageOption, source?: Sprite) {
     let sprite = source;
-    if (sprite == undefined)
+    if (sprite == undefined) {
         sprite = new Sprite(texture);
+        sprite.tint = 'white';
+    }
 
     let w_ratio = texture.width / texture.height;
     sprite.anchor.set(0, 0.5);

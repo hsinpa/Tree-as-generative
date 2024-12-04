@@ -1,8 +1,9 @@
-import { MersenneTwister19937, Random } from "random-js";
-import { Config, WorkerEventName } from "./SC_Static";
+import { Random } from "random-js";
+import { WorkerEventName } from "./SC_Static";
 import { IWorkerEvent, Rect } from "./SC_Types";
 import { SpaceColonization } from "./SpaceColonization";
 import { vec2 } from "gl-matrix";
+import { RandomEngine } from "../Hsinpa/UtilityFunc";
 
 console.log("Hello I am SC Worker");
 
@@ -15,11 +16,15 @@ class SC_Worker {
     public execute_sc_colonization_creation(width: number, height: number, seed?: number,) {
         this.m_width = width;
         this.m_height = height;
-        this.m_rand_engine = this.get_random_engine(seed);
+        this.m_rand_engine = RandomEngine(seed);
         this.m_space_colonization = new SpaceColonization(20, 100, this.m_rand_engine);
 
-        let attractor_y = height * 0.5;
-        let attractor_spawn_rect = new Rect(width * 0.2, 0, height * 0.6, attractor_y);
+        
+        let attractor_y = height * this.m_rand_engine.real(0.4, 0.8);
+        let width_offset = this.m_rand_engine.real(0.1, 0.2);
+        let width_size_offset = this.m_rand_engine.real(0.6, 0.8);
+
+        let attractor_spawn_rect = new Rect(width * width_offset, 0, height * width_size_offset, attractor_y);
 
         this.m_space_colonization.spawn_attractor(attractor_spawn_rect, 200);
         this.m_space_colonization.spawn_free_branch(width * 0.5, height);
@@ -96,13 +101,6 @@ class SC_Worker {
         }
     }
 
-
-    private get_random_engine(seed?: number) : Random {
-        if (seed == undefined) {
-            return new Random(MersenneTwister19937.autoSeed());
-        } else
-            return new Random(MersenneTwister19937.seed(seed));
-    }
 }
 
 const sc_worker = new SC_Worker();

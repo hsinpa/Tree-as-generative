@@ -18,6 +18,7 @@ export default class SC_Director {
 
     private m_candidate_branch: SC_Branch;
     private m_mode: Mode = Mode.Idle;
+    private m_kinematics_free_flag = true;
 
     constructor(canvas_dom_query: string, seed?: number) {
         this.m_pixi_app = new Application();
@@ -35,7 +36,9 @@ export default class SC_Director {
                     {type: 'module', name:"kinematic_worker"}
         );
 
-        this.m_sc_worker.onmessage = (this.on_sc_worker_message.bind(this));
+        this.m_sc_worker.onmessage = (this.on_worker_message.bind(this));
+        this.m_kinematic_worker.onmessage = (this.on_worker_message.bind(this));
+
         this.create_canvas_colonization(canvas_dom_query);
     }
 
@@ -47,6 +50,8 @@ export default class SC_Director {
         });
 
         this.m_pixi_app.ticker.add(this.update.bind(this));
+
+        this.m_pixi_app.stage.eventMode = 'static';
 
         this.m_pixi_app.canvas.addEventListener('mousemove', e => { this.on_mouse_event(e.clientX, e.clientY, MouseEvent.Hover); } );
         this.m_pixi_app.canvas.addEventListener('mousedown', e => { this.on_mouse_event(e.clientX, e.clientY, MouseEvent.Down); } );
@@ -60,13 +65,16 @@ export default class SC_Director {
         this.m_pixi_canvas.render(ticker);
     }
 
-    private on_sc_worker_message(ev: MessageEvent) {
-        console.log(ev.data);
-
+    private on_worker_message(ev: MessageEvent) {
         switch (ev.data['event']){
             case WorkerEventName.World_Is_Create:
                 this.m_kinematic_worker.postMessage(ev.data);
                 this.m_pixi_canvas.init_branch(ev.data['data']['branches']);
+                break;
+            
+            case WorkerEventName.WorldUpdate:
+                this.m_pixi_canvas.set_branches(ev.data['data']['branch_dict']);
+                this.m_kinematics_free_flag = true;
                 break;
         }
     }
@@ -76,11 +84,17 @@ export default class SC_Director {
             this.m_candidate_branch = this.m_pixi_canvas.get_closest_endpoint(this.m_mouse_position);
         } 
 
-        if (this.m_mode == Mode.Interaction && this.m_candidate_branch != undefined) {
+        if (this.m_mode == Mode.Interaction && this.m_candidate_branch != undefined && this.m_kinematics_free_flag) {
+            this.m_kinematics_free_flag = false;
             this.m_kinematic_worker.postMessage({"event": WorkerEventName.ModeInteraction,
                 data: {branch_id: this.m_candidate_branch.id, 
                         x: this.m_mouse_position[0], y: this.m_mouse_position[1]}
             });
+        }
+
+        if (this.m_mode == Mode.Idle && this.m_kinematics_free_flag) {
+            this.m_kinematics_free_flag = false;
+            this.m_kinematic_worker.postMessage({"event": WorkerEventName.WorldUpdate});
         }
     }
 

@@ -72,7 +72,9 @@ export class SC_Branch {
         return t;
     }
 
-    constructor(p_postion : vec2, p_parent : SC_Branch) {
+    constructor(p_postion? : vec2, p_parent? : SC_Branch) {
+        if (p_postion == null && p_parent == null) return;
+
         this.id = uuidv4();
         this.position = p_postion;
         
@@ -156,7 +158,7 @@ export class SC_Branch {
     }
 
     static convert(raw_object: SC_Branch) {
-        let clone_branch = new SC_Branch(vec2.fromValues(0,0), null);
+        let clone_branch = new SC_Branch();
         Object.assign(clone_branch, raw_object);
 
         clone_branch.style = Object.assign(new Color(), raw_object.style);
