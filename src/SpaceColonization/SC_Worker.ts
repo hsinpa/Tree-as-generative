@@ -24,9 +24,10 @@ class SC_Worker {
         let width_offset = this.m_rand_engine.real(0.1, 0.2);
         let width_size_offset = this.m_rand_engine.real(0.6, 0.8);
 
-        let attractor_spawn_rect = new Rect(width * width_offset, 0, height * width_size_offset, attractor_y);
+        let candidate_node_size = this.m_rand_engine.integer(250, 350);
 
-        this.m_space_colonization.spawn_attractor(attractor_spawn_rect, 200);
+        let attractor_spawn_rect = new Rect(width * width_offset, 0, width * width_size_offset, attractor_y);
+        this.m_space_colonization.spawn_attractor(attractor_spawn_rect, candidate_node_size);
         this.m_space_colonization.spawn_free_branch(width * 0.5, height);
 
         this.execute_grow_branch_recursion(this.m_space_colonization);
